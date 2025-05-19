@@ -4,6 +4,7 @@
 #include "types.h"
 #include <string>
 #include <functional>
+#include <vector>
 
 #define CHECK_REGISTER(reg, val) ((reg & val) == val)
 
@@ -11,8 +12,16 @@ struct MOS_6502;
 struct Memory;
 struct Instruction; 
 
-struct Emulator 
+class Emulator 
 {
+public:
+
+    void loadROM(const std::vector<Byte>& program);
+    void run();
+
+private:
+    Instruction loadNextInstruction(); 
+private:
     MOS_6502 cpu; 
     Memory mem;
 };

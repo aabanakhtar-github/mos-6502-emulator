@@ -1,5 +1,25 @@
 #include "mos6502.h"
 
+
+void Emulator::loadROM(const std::vector<Byte>& program) 
+{
+
+}
+
+void Emulator::run()
+{
+  
+  while () 
+  {
+
+  }
+}
+
+Instruction Emulator::loadNextInstruction()
+{
+  return Instruction{};
+}
+
 MOS_6502::MOS_6502() 
     : program_counter(Memory::ROM_START),
       stack_pointer(Memory::STACK_BASE),
