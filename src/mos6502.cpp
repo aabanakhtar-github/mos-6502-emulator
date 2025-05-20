@@ -3,6 +3,9 @@
 #include <cstring>
 #include "util.h"
 
+#define DELAY_CYCLES(map, opcode) for (int i = 0; i < map[opcode].cycles; ++i) delayMicros(CLOCK_uS)
+#define IS_BIT_ON(n, i) (n & (1 << i) == (1 << i))
+
 using namespace std::placeholders;
 
 void Emulator::loadROM(const std::vector<Byte>& program) 
@@ -35,12 +38,30 @@ void Emulator::run()
   }
 }
 
+/* do nothing */
 void Emulator::NOP(int opcode)
 {
-  for (int i = 0; i < instruction_map[opcode].cycles; ++i) 
-  {
-    delayMicros(CLOCK_uS);
+  DELAY_CYCLES(instruction_map, opcode);
+}
+
+void Emulator::ORA_II(int opcode)
+{
+  /* Indexed indirect; add value of X register to operand*/ 
+  Byte index = mem.memory[++cpu.program_counter];
+  Word addr = (Word)cpu.X + (Word)index;
+  Byte& target = mem.memory[addr]; // wrap around bultin :)
+  target |= cpu.accumulator; 
+
+  if (target == 0) {
+    cpu.P |= MOS_6502::P_ZERO;
   }
+
+  if (IS_BIT_ON(target, 7)) // is negative bit sign on
+  {
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  }
+
+  DELAY_CYCLES(instruction_map, opcode);
 }
 
 MOS_6502::MOS_6502() 

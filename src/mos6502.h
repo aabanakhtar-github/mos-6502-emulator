@@ -94,8 +94,21 @@ public:
 
 private:
     void initInstructionMap();
+    /* No operation*/
     void NOP(int opcode);
-
+    /* or with accumulator */
+    void ORA_II(int opcode); 
+    void ORA_ZP(); 
+    void ORA_ZPX(); 
+    void ORA_IM(); 
+    void ORA_ABS(); 
+    void ORA_ABSX();
+    /* Load into accumulator */
+    void LDA();
+    /* Transfer accumulator to X*/
+    void TAX();
+    /* Increment X */
+    void INX();
 private:
     struct MOS_6502 cpu; 
     struct Memory mem;
