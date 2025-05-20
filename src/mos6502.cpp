@@ -34,21 +34,127 @@ void Emulator::run()
 
     auto instruction = instruction_map[opcode];
     instruction.implementation(opcode);
+    // simulate the delay
+    DELAY_CYCLES(instruction_map, opcode);
     cpu.program_counter++;
   }
+}
+
+Byte* Emulator::handleAddressing(int opcode)
+{
+    auto mode = instruction_map[opcode].addressing_mode;
+    switch (mode)
+    {
+    case AddressMode::IMMEDIATE:
+        return immediate();
+    case AddressMode::ZERO_PAGE:
+        return zeroPage();
+    case AddressMode::ZERO_PAGE_AND_X:
+        return zeroPageX();
+    case AddressMode::ZERO_PAGE_AND_Y:
+        return zeroPageY();
+    case AddressMode::ABSOLUTE:
+        return absolute();
+    case AddressMode::ABSOLUTE_AND_X:
+        return absoluteX();
+    case AddressMode::ABSOLUTE_AND_Y:
+        return absoluteY();
+    case AddressMode::INDIRECT:
+        return indirect();
+    case AddressMode::INDEXED_INDIRECT:
+        return indexedIndirect();
+    case AddressMode::INDIRECT_INDEXED:
+        return indirectIndexed();
+    case AddressMode::ACCUMULATOR:
+        return accumulator();
+    case AddressMode::IMPLICIT:
+        // No operand, return 0 or a dummy value
+        return nullptr;
+    case AddressMode::RELATIVE:
+        return relative();
+    default:
+        std::cerr << "Unhandled addressing mode" << std::endl;
+        return nullptr;
+    }
+}
+
+Byte* Emulator::accumulator() 
+{
+  return &cpu.accumulator;
+}
+
+Byte* Emulator::zeroPage()
+{
+  std::size_t offset = mem.readByte(++cpu.program_counter);
+  return mem.memory + offset;
+}
+
+Byte* Emulator::zeroPageX()
+{
+  Byte page_offset = mem.readByte(++cpu.program_counter); 
+  std::size_t offset = cpu.X; 
+  return mem.memory + page_offset + offset; 
+}
+
+Byte* Emulator::zeroPageY() 
+{
+  Byte page_offset = mem.readByte(++cpu.program_counter); 
+  std::size_t offset = cpu.Y; 
+  return mem.memory + page_offset + offset;
+}
+
+Byte* Emulator::relative() 
+{
+  // make sure to range limit the offset
+  SignedByte offset = (SignedByte)mem.readByte(++cpu.program_counter);
+  // skip over one extra to hit the target instruction
+  return mem.memory + (cpu.program_counter + offset + 1);  
+}
+
+/* pointer to pointer */
+Byte* Emulator::indirect() 
+{
+  Byte lower_byte = mem.readByte(++cpu.program_counter); 
+  Byte higher_byte = mem.readByte(++cpu.program_counter);
+  Word location = ((Word)higher_byte << 8) | (Word)lower_byte;
+
+  // just crash because this is weird
+  if (location + 1 >= Memory::ROM_END)
+  {
+    std::exit(1);
+  }
+
+  Byte pointer_low = mem.readByte(location);
+  Byte pointer_high = mem.readByte(location + 1);
+  Word actual_location = ((Word)pointer_high << 8) | (Word)pointer_low;
+
+  return mem.memory + actual_location;
+}
+
+/* X + hardcoded memory location */
+Byte* Emulator::indirectIndexed()
+{
+  std::size_t offset = cpu.X; 
+  Byte lower_byte = mem.readByte(++cpu.program_counter);
+  Byte higher_byte = mem.readByte(++cpu.program_counter); 
+  Word hardcoded_address = ((Word)higher_byte << 8) | (Word)lower_byte;
+  return mem.memory + hardcoded_address + offset;
+}
+
+/* Big bad boi for later*/
+Byte* Emulator::indexedIndirect()
+{
+
 }
 
 /* do nothing */
 void Emulator::NOP(int opcode)
 {
-  DELAY_CYCLES(instruction_map, opcode);
 }
 
-void Emulator::ORA_II(int opcode)
+void Emulator::ORA(int opcode)
 {
-  /* Indexed indirect; add value of X register to operand*/ 
-  Byte index = mem.memory[++cpu.program_counter];
-  Word addr = (Word)cpu.X + (Word)index;
+  Word addr = handleAddressing(opcode);
   Byte& target = mem.memory[addr]; // wrap around bultin :)
   target |= cpu.accumulator; 
 
@@ -60,8 +166,6 @@ void Emulator::ORA_II(int opcode)
   {
     cpu.P |= MOS_6502::P_NEGATIVE;
   }
-
-  DELAY_CYCLES(instruction_map, opcode);
 }
 
 MOS_6502::MOS_6502() 

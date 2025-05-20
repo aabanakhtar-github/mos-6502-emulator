@@ -41,6 +41,7 @@ struct MOS_6502
 };
 
 
+/* Struct to handle addressing and memory stuff */
 struct Memory
 {
     Byte memory[WORD_MAX];
@@ -93,16 +94,27 @@ public:
     void run();
 
 private:
+    /* Addressing modes*/
+    Byte* handleAddressing(int opcode); 
+    Byte* accumulator(); 
+    Byte* immediate(); 
+    Byte* zeroPage(); 
+    Byte* zeroPageX(); 
+    Byte* zeroPageY(); 
+    Byte* relative(); 
+    Byte* absolute(); 
+    Byte* absoluteX(); 
+    Byte* absoluteY(); 
+    Byte*  indirect(); 
+    Byte* indexedIndirect(); 
+    Byte* indirectIndexed(); 
+
+
     void initInstructionMap();
     /* No operation*/
     void NOP(int opcode);
     /* or with accumulator */
-    void ORA_II(int opcode); 
-    void ORA_ZP(); 
-    void ORA_ZPX(); 
-    void ORA_IM(); 
-    void ORA_ABS(); 
-    void ORA_ABSX();
+    void ORA(int opcode); 
     /* Load into accumulator */
     void LDA();
     /* Transfer accumulator to X*/
