@@ -1,7 +1,17 @@
-#include <iostream>
+#include "mos6502.h"
 
 int main(int argc, char* argv[]) 
 {
-    std::cout << "Hello 6502" << std::endl; 
+    Emulator emulator;
+    std::vector<Byte> rom = {
+        0xEA,
+        0xEA,
+        0xFF-1
+    };
+    rom.push_back(0xFF - 1);
+
+    emulator.loadROM(rom);
+
+    emulator.run();
     return 0;    
 }

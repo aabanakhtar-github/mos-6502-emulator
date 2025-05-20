@@ -8,23 +8,8 @@
 
 #define CHECK_REGISTER(reg, val) ((reg & val) == val)
 
-struct MOS_6502;
-struct Memory;
-struct Instruction; 
 
-class Emulator 
-{
-public:
 
-    void loadROM(const std::vector<Byte>& program);
-    void run();
-
-private:
-    Instruction loadNextInstruction(); 
-private:
-    MOS_6502 cpu; 
-    Memory mem;
-};
 
 struct MOS_6502 
 {
@@ -59,6 +44,9 @@ struct MOS_6502
 struct Memory
 {
     Byte memory[WORD_MAX];
+
+    Byte readByte(Word address) { return *(memory + address); } 
+    void writeByte(Word address, Byte value) { *(memory + address) = value; };
 
     // useful locations - zero page is the fastest memory
     constexpr static Word ZERO_PAGE_MAX = 0x00FF;
@@ -95,10 +83,24 @@ struct Instruction
     std::size_t args_count;
     std::size_t cycles; 
     AddressMode addressing_mode;
-    std::function<void()> implementation;
+    std::function<void(Byte)> implementation;
+};
+
+class Emulator 
+{
+public:
+    void loadROM(const std::vector<Byte>& program);
+    void run();
+
+private:
+    void initInstructionMap();
+    void NOP(int opcode);
+
+private:
+    struct MOS_6502 cpu; 
+    struct Memory mem;
+    Instruction instruction_map[0xFF];
 };
 
 // 256 insturction set architecture
-extern const Instruction instruction_map[0xFF];
-
 #endif // MOS_6502_H
