@@ -131,14 +131,9 @@ Byte* Emulator::indirect()
   return mem.memory + actual_location;
 }
 
-/* X + hardcoded memory location */
+/*TODO: fix these*/
 Byte* Emulator::indirectIndexed()
 {
-  std::size_t offset = cpu.X; 
-  Byte lower_byte = mem.readByte(++cpu.program_counter);
-  Byte higher_byte = mem.readByte(++cpu.program_counter); 
-  Word hardcoded_address = ((Word)higher_byte << 8) | (Word)lower_byte;
-  return mem.memory + hardcoded_address + offset;
 }
 
 /* Big bad boi for later*/
