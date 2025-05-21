@@ -172,7 +172,7 @@ Byte* Emulator::indirect()
   }
 
   Byte pointer_low = mem.readByte(location);
-  Byte pointer_high = mem.readByte(location + 1);
+  Byte pointer_high = mem.readByte((location & 0xFF00) & ((location + 1) & 0x00FF)); // simulate the lovely bugs created by them 6502 developers
   Word actual_location = ((Word)pointer_high << 8) | (Word)pointer_low;
 
   return mem.memory + actual_location;
