@@ -98,15 +98,15 @@ Byte* Emulator::zeroPage()
 Byte* Emulator::zeroPageX()
 {
   Byte page_offset = mem.readByte(++cpu.program_counter); 
-  std::size_t offset = cpu.X; 
-  return mem.memory + page_offset + offset; 
+  Byte offset = cpu.X; 
+  return mem.memory + ((page_offset + offset) & 0xFF); 
 }
 
 Byte* Emulator::zeroPageY() 
 {
   Byte page_offset = mem.readByte(++cpu.program_counter); 
-  std::size_t offset = cpu.Y; 
-  return mem.memory + page_offset + offset;
+  Byte offset = cpu.Y; 
+  return mem.memory + ((page_offset + offset) & 0xFF); // simulate zpg round behavior
 }
 
 Byte* Emulator::relative() 
