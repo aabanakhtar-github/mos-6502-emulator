@@ -85,7 +85,7 @@ Byte* Emulator::accumulator()
 
 Byte* Emulator::zeroPage()
 {
-  std::size_t offset = mem.readByte(++cpu.program_counter);
+  Byte offset = mem.readByte(++cpu.program_counter);
   return mem.memory + offset;
 }
 
@@ -131,15 +131,32 @@ Byte* Emulator::indirect()
   return mem.memory + actual_location;
 }
 
-/*TODO: fix these*/
-Byte* Emulator::indirectIndexed()
-{
-}
-
-/* Big bad boi for later*/
+/* (zp + x) */
 Byte* Emulator::indexedIndirect()
 {
+  Byte offset = cpu.X; 
+  /* location in the zero page of the initial address*/
+  Byte location = mem.readByte(++cpu.program_counter); 
+  /* The zero page address offsetted*/
+  Byte zp_address = (Byte)(offset + location); // simulates a bug, making this effective only in the zero page
+  Byte lower_byte = mem.readByte(zp_address); 
+  Byte higher_byte = mem.readByte((Byte)(zp_address + 1));
+  Word target_address = ((Word)lower_byte | ((Word)higher_byte << 8)); 
+  // return (zp + x)
+  return mem.memory + target_address;
+}
 
+/* (zp) + y  */
+Byte* Emulator::indirectIndexed()
+{
+  Byte offset = cpu.Y; 
+  Byte location = mem.readByte(++cpu.program_counter); // location in the zero page
+  // get the address from the zero page
+  Byte lower_byte = mem.readByte(location); 
+  Byte higher_byte = mem.readByte((Byte)(location + 1)); // implement wrap around bug for 6502
+  Word target_address = ((Word)lower_byte | (Word)(higher_byte << 8)); 
+  // add offset to it
+  return mem.memory + target_address + offset;
 }
 
 /* do nothing */
@@ -149,8 +166,8 @@ void Emulator::NOP(int opcode)
 
 void Emulator::ORA(int opcode)
 {
-  Word addr = handleAddressing(opcode);
-  Byte& target = mem.memory[addr]; // wrap around bultin :)
+  Byte* addr = handleAddressing(opcode);
+  Byte& target = *addr; // wrap around bultin :)
   target |= cpu.accumulator; 
 
   if (target == 0) {
