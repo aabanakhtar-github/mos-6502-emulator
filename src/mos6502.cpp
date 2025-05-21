@@ -4,7 +4,7 @@
 #include "util.h"
 
 #define DELAY_CYCLES(map, opcode) for (int i = 0; i < map[opcode].cycles; ++i) delayMicros(CLOCK_uS)
-#define IS_BIT_ON(n, i) (n & (1 << i) == (1 << i))
+#define IS_BIT_ON(n, i) ((n & (1 << i)) == (1 << i))
 
 using namespace std::placeholders;
 
@@ -83,6 +83,12 @@ Byte* Emulator::accumulator()
   return &cpu.accumulator;
 }
 
+Byte *Emulator::immediate()
+{
+  Word addr = ++cpu.program_counter;
+  return mem.memory + addr;
+}
+
 Byte* Emulator::zeroPage()
 {
   Byte offset = mem.readByte(++cpu.program_counter);
@@ -107,9 +113,50 @@ Byte* Emulator::relative()
 {
   // make sure to range limit the offset
   SignedByte offset = (SignedByte)mem.readByte(++cpu.program_counter);
-  // skip over one extra to hit the target instruction
-  return mem.memory + (cpu.program_counter + offset + 1);  
+  return mem.memory + (cpu.program_counter + offset);  
 }
+
+/* spit out an address */
+Byte *Emulator::absolute()
+{
+  Byte low = mem.readByte(++cpu.program_counter); 
+  Byte high = mem.readByte(++cpu.program_counter); 
+  Word addr = ((Word)low | ((Word)high << 8)); 
+  return mem.memory + addr; 
+}
+
+Byte *Emulator::absoluteX() 
+{
+  int offset = cpu.X; 
+  Byte low = mem.readByte(++cpu.program_counter); 
+  Byte high = mem.readByte(++cpu.program_counter); 
+  Word addr = ((Word)low | ((Word)high << 8)); 
+
+  // if these are different pages, incur page penalty
+  if ((addr & 0xFF00) != ((addr + offset) & 0xFF00))
+  {
+    delayMicros(CLOCK_uS);
+  }
+
+  return mem.memory + addr + offset; 
+}
+
+Byte *Emulator::absoluteY() 
+{
+  int offset = cpu.Y; 
+  Byte low = mem.readByte(++cpu.program_counter); 
+  Byte high = mem.readByte(++cpu.program_counter); 
+  Word addr = ((Word)low | ((Word)high << 8)); 
+
+  // if these are different pages, incur page penalty
+  if ((addr & 0xFF00) != ((addr + offset) & 0xFF00))
+  {
+    delayMicros(CLOCK_uS);
+  }
+
+  return mem.memory + addr + offset; 
+}
+
 
 /* pointer to pointer */
 Byte* Emulator::indirect() 
@@ -155,6 +202,13 @@ Byte* Emulator::indirectIndexed()
   Byte lower_byte = mem.readByte(location); 
   Byte higher_byte = mem.readByte((Byte)(location + 1)); // implement wrap around bug for 6502
   Word target_address = ((Word)lower_byte | (Word)(higher_byte << 8)); 
+
+  // incur page crossing penalty
+  if ((target_address & 0xFF00) != ((target_address + offset) & 0xFF00))
+  {
+    delayMicros(CLOCK_uS);
+  }
+
   // add offset to it
   return mem.memory + target_address + offset;
 }
@@ -167,18 +221,74 @@ void Emulator::NOP(int opcode)
 void Emulator::ORA(int opcode)
 {
   Byte* addr = handleAddressing(opcode);
-  Byte& target = *addr; // wrap around bultin :)
-  target |= cpu.accumulator; 
+  *addr |= cpu.accumulator; 
 
-  if (target == 0) {
+  cpu.P &= ~MOS_6502::P_ZERO; 
+  cpu.P &= ~MOS_6502::P_NEGATIVE;
+  
+  if (*addr == 0) 
+  {
     cpu.P |= MOS_6502::P_ZERO;
   }
 
-  if (IS_BIT_ON(target, 7)) // is negative bit sign on
+  if (IS_BIT_ON(*addr, 7)) // is negative bit sign on
   {
     cpu.P |= MOS_6502::P_NEGATIVE;
   }
 }
+
+void Emulator::INX(int opcode) 
+{
+  cpu.X++; 
+  
+  cpu.P &= ~MOS_6502::P_ZERO; 
+  cpu.P &= ~MOS_6502::P_NEGATIVE;
+  if (cpu.X == 0) {
+    cpu.P |= MOS_6502::P_ZERO; 
+  }
+
+  if (IS_BIT_ON(cpu.X, 7)) 
+  {
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  }
+}
+
+void Emulator::TAX(int opcode) 
+{
+  cpu.X = cpu.accumulator;
+
+  cpu.P &= ~MOS_6502::P_ZERO; 
+  cpu.P &= ~MOS_6502::P_NEGATIVE;
+
+  if (cpu.X == 0) 
+  {
+    cpu.P |= MOS_6502::P_ZERO;
+  }
+
+  if (IS_BIT_ON(cpu.X, 7)) 
+  {
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  }
+}
+
+void Emulator::LDA(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  cpu.accumulator = *addr; 
+ 
+  cpu.P &= ~MOS_6502::P_ZERO; 
+  cpu.P &= ~MOS_6502::P_NEGATIVE; 
+  if (cpu.accumulator == 0) 
+  {
+    cpu.P |= MOS_6502::P_ZERO; 
+  }
+
+  if (IS_BIT_ON(cpu.accumulator, 7)) 
+  {
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  }
+}
+
 
 MOS_6502::MOS_6502() 
     : program_counter(Memory::ROM_START),
@@ -186,7 +296,7 @@ MOS_6502::MOS_6502()
       accumulator(0), 
       X(0), 
       Y(0), 
-      P() // random value
+      P(0x34)
 {
 
 }

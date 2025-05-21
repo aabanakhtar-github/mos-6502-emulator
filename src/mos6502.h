@@ -105,7 +105,7 @@ private:
     Byte* absolute(); 
     Byte* absoluteX(); 
     Byte* absoluteY(); 
-    Byte*  indirect(); 
+    Byte* indirect(); 
     Byte* indexedIndirect(); 
     Byte* indirectIndexed(); 
 
@@ -116,11 +116,11 @@ private:
     /* or with accumulator */
     void ORA(int opcode); 
     /* Load into accumulator */
-    void LDA();
+    void LDA(int opcode);
     /* Transfer accumulator to X*/
-    void TAX();
+    void TAX(int opcode);
     /* Increment X */
-    void INX();
+    void INX(int opcode);
 private:
     struct MOS_6502 cpu; 
     struct Memory mem;
