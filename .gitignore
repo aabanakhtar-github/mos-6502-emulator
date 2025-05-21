@@ -9,5 +9,6 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 build
+cc65
 _deps
 CMakeUserPresets.json

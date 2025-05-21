@@ -44,7 +44,7 @@ struct MOS_6502
 /* Struct to handle addressing and memory stuff */
 struct Memory
 {
-    Byte memory[WORD_MAX];
+    Byte memory[WORD_MAX + 1];
 
     Byte readByte(Word address) { return *(memory + address); } 
     void writeByte(Word address, Byte value) { *(memory + address) = value; };
@@ -56,7 +56,9 @@ struct Memory
     constexpr static Word RAM_START = 0x0200;
     constexpr static Word RAM_END = 0x7FFF; // 32KB RAM
     constexpr static Word ROM_START = 0x8000; 
-    constexpr static Word ROM_END = 0xFFFF; // 62.5 KB ROM
+    constexpr static Word ROM_END = 0xFFFD; // 62.5 KB ROM
+    constexpr static Word BRK_INT = 0xFFFE; 
+    constexpr static Word BRK_INT_HI = 0xFFFF;
 };
 
 // instructions have different address modes
@@ -84,7 +86,7 @@ struct Instruction
     std::size_t args_count;
     std::size_t cycles; 
     AddressMode addressing_mode;
-    std::function<void(Byte)> implementation;
+    std::function<void(int)> implementation;
 };
 
 class Emulator 
@@ -121,6 +123,13 @@ private:
     void TAX(int opcode);
     /* Increment X */
     void INX(int opcode);
+    /* BRK */
+    void BRK(int opcode){}
+    /* Store in accumulator */
+    void STA(int opcode){}
+    /* JUMP! */
+    void JMP(int opcode) {}
+
 private:
     struct MOS_6502 cpu; 
     struct Memory mem;
