@@ -8,58 +8,8 @@
 
 #define CHECK_REGISTER(reg, val) ((reg & val) == val)
 
+#include "components.h"
 
-
-
-struct MOS_6502 
-{
-    Word program_counter; 
-    Word stack_pointer;
-
-    /* For all arithmetic operations*/
-    Byte accumulator; 
-
-    /* General Purpose Registers */
-    Byte X; 
-    Byte Y; 
-
-    /* For processor state */
-    Byte P = 0x0;
-
-    /* Bit fields for the P register */
-    constexpr static int P_NEGATIVE     = 0b10000000;
-    constexpr static int P_OVERFLOW     = 0b01000000;
-    constexpr static int P_UNUSED       = 0b00100000;  // not typically used
-    constexpr static int P_BREAK        = 0b00010000;
-    constexpr static int P_DECIMAL      = 0b00001000;
-    constexpr static int P_INT_DISABLE  = 0b00000100;
-    constexpr static int P_ZERO         = 0b00000010;
-    constexpr static int P_CARRY        = 0b00000001;
-
-
-    explicit MOS_6502();
-};
-
-
-/* Struct to handle addressing and memory stuff */
-struct Memory
-{
-    Byte memory[WORD_MAX + 1];
-
-    Byte readByte(Word address) { return *(memory + address); } 
-    void writeByte(Word address, Byte value) { *(memory + address) = value; };
-
-    // useful locations - zero page is the fastest memory
-    constexpr static Word ZERO_PAGE_MAX = 0x00FF;
-    constexpr static Word STACK_BASE = 0x0100; 
-    constexpr static Word STACK_TOP = 0x01FF; // 256 byte stack
-    constexpr static Word RAM_START = 0x0200;
-    constexpr static Word RAM_END = 0x7FFF; // 32KB RAM
-    constexpr static Word ROM_START = 0x8000; 
-    constexpr static Word ROM_END = 0xFFFD; // 62.5 KB ROM
-    constexpr static Word BRK_INT = 0xFFFE; 
-    constexpr static Word BRK_INT_HI = 0xFFFF;
-};
 
 // instructions have different address modes
 enum class AddressMode
@@ -96,6 +46,8 @@ public:
     void run();
 
 private:
+    void handleArithmeticFlagChanges(Byte value);
+
     /* Addressing modes*/
     Byte* handleAddressing(int opcode); 
     Byte* accumulator(); 
@@ -113,22 +65,91 @@ private:
 
 
     void initInstructionMap();
-    /* No operation*/
+    /* No operation */
     void NOP(int opcode);
-    /* or with accumulator */
-    void ORA(int opcode); 
-    /* Load into accumulator */
+
+    /* OR with accumulator */
+    void ORA(int opcode);
+
+    /* Load into registers */
     void LDA(int opcode);
-    /* Transfer accumulator to X*/
-    void TAX(int opcode);
-    /* Increment X */
+    void LDX(int opcode);
+    void LDY(int opcode);
+
+    /* Transfer instructions */
+    void TAX(int opcode);  // Transfer accumulator to X
+    void TXA(int opcode);  // Transfer X to accumulator
+    void TAY(int opcode);  // Transfer accumulator to Y
+    void TSX(int opcode);  // Transfer stack pointer to X
+    void TXS(int opcode);  // Transfer X to stack pointer
+    void TYA(int opcode);  // Transfer Y to accumulator
+
+    /* Increment and decrement */
     void INX(int opcode);
-    /* BRK */
-    void BRK(int opcode){}
-    /* Store in accumulator */
-    void STA(int opcode){}
-    /* JUMP! */
-    void JMP(int opcode) {}
+    void INY(int opcode);
+    void DEX(int opcode);
+    void DEY(int opcode);
+
+    /* Break (interrupt) */
+    void BRK(int opcode);
+
+    /* Store registers to memory */
+    void STA(int opcode);
+    void STX(int opcode);
+    void STY(int opcode);
+
+    /* Jump and subroutine */
+    void JMP(int opcode);
+    void JSR(int opcode);
+    void RTS(int opcode);
+
+    /* Stack operations */
+    void PHA(int opcode);
+    void PLA(int opcode);
+    void PHP(int opcode);
+    void PLP(int opcode);
+
+    /* Logical operations */
+    void AND(int opcode);
+    void EOR(int opcode);
+
+    /* Arithmetic */
+    void ADC(int opcode);
+    void SBC(int opcode);
+
+    /* Shift and rotate */
+    void ASL(int opcode);
+    void LSR(int opcode);
+    void ROL(int opcode);
+    void ROR(int opcode);
+
+    /* Comparison */
+    void CMP(int opcode);
+    void CPX(int opcode);
+    void CPY(int opcode);
+
+    /* Branching */
+    void BCC(int opcode);
+    void BCS(int opcode);
+    void BEQ(int opcode);
+    void BMI(int opcode);
+    void BNE(int opcode);
+    void BPL(int opcode);
+    void BVC(int opcode);
+    void BVS(int opcode);
+
+    /* Status flag control */
+    void CLC(int opcode);
+    void CLD(int opcode);
+    void CLI(int opcode);
+    void CLV(int opcode);
+    void SEC(int opcode);
+    void SED(int opcode);
+    void SEI(int opcode);
+
+    /* System */
+    void RTI(int opcode);
+    void NOP(int opcode);
 
 private:
     struct MOS_6502 cpu; 

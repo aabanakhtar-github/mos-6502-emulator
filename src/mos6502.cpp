@@ -40,6 +40,22 @@ void Emulator::run()
   }
 }
 
+void Emulator::handleArithmeticFlagChanges(Byte value)
+{
+  cpu.P &= ~MOS_6502::P_ZERO; 
+  cpu.P &= ~MOS_6502::P_NEGATIVE;
+
+  if (value == 0) 
+  {
+    cpu.P |= MOS_6502::P_ZERO;
+  }
+
+  if (IS_BIT_ON(value, 7)) 
+  {
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  }
+}
+
 Byte* Emulator::handleAddressing(int opcode)
 {
     auto mode = instruction_map[opcode].addressing_mode;
@@ -240,55 +256,83 @@ void Emulator::ORA(int opcode)
 void Emulator::INX(int opcode) 
 {
   cpu.X++; 
-  
-  cpu.P &= ~MOS_6502::P_ZERO; 
-  cpu.P &= ~MOS_6502::P_NEGATIVE;
-  if (cpu.X == 0) {
-    cpu.P |= MOS_6502::P_ZERO; 
-  }
+  handleArithmeticFlagChanges(cpu.X);
+}
 
-  if (IS_BIT_ON(cpu.X, 7)) 
-  {
-    cpu.P |= MOS_6502::P_NEGATIVE;
-  }
+void Emulator::TXA(int opcode)
+{
+  cpu.accumulator = cpu.X;
+  handleArithmeticFlagChanges(cpu.accumulator);
+}
+
+void Emulator::TAY(int opcode)
+{
+  cpu.Y = cpu.accumulator;
+  handleArithmeticFlagChanges(cpu.Y);
+}
+
+void Emulator::TSX(int opcode)
+{
+  cpu.X = cpu.S; 
+  handleArithmeticFlagChanges(cpu.X);
+}
+
+void Emulator::TXS(int opcode)
+{
+  cpu.S = cpu.X; 
+  handleArithmeticFlagChanges(cpu.S);
+}
+
+void Emulator::TYA(int opcode)
+{
+  cpu.accumulator = cpu.Y; 
+  handleArithmeticFlagChanges(cpu.accumulator);
 }
 
 void Emulator::TAX(int opcode) 
 {
   cpu.X = cpu.accumulator;
-
-  cpu.P &= ~MOS_6502::P_ZERO; 
-  cpu.P &= ~MOS_6502::P_NEGATIVE;
-
-  if (cpu.X == 0) 
-  {
-    cpu.P |= MOS_6502::P_ZERO;
-  }
-
-  if (IS_BIT_ON(cpu.X, 7)) 
-  {
-    cpu.P |= MOS_6502::P_NEGATIVE;
-  }
+  handleArithmeticFlagChanges(cpu.X);
 }
 
 void Emulator::LDA(int opcode)
 {
   Byte* addr = handleAddressing(opcode); 
   cpu.accumulator = *addr; 
- 
-  cpu.P &= ~MOS_6502::P_ZERO; 
-  cpu.P &= ~MOS_6502::P_NEGATIVE; 
-  if (cpu.accumulator == 0) 
-  {
-    cpu.P |= MOS_6502::P_ZERO; 
-  }
-
-  if (IS_BIT_ON(cpu.accumulator, 7)) 
-  {
-    cpu.P |= MOS_6502::P_NEGATIVE;
-  }
+  handleArithmeticFlagChanges(cpu.accumulator);
 }
 
+void Emulator::LDX(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  cpu.X = *addr; 
+  handleArithmeticFlagChanges(cpu.X);
+}
+
+void Emulator::LDY(int opcode) 
+{
+  Byte* addr = handleAddressing(opcode); 
+  cpu.Y = *addr; 
+  handleArithmeticFlagChanges(cpu.Y);
+}
+
+void Emulator::STA(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  *addr = cpu.accumulator;
+}
+
+void Emulator::STX(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  *addr = cpu.X;
+}
+
+void Emulator::STY(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  *addr = cpu.Y;
+}
 
 MOS_6502::MOS_6502() 
     : program_counter(Memory::ROM_START),
