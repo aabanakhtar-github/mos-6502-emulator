@@ -3,17 +3,16 @@
 struct MOS_6502 
 {
     Word program_counter; 
-    Word stack_pointer;
 
     /* For all arithmetic operations*/
-    Byte accumulator; 
+    Byte accumulator = 0; 
 
     /* General Purpose Registers */
-    Byte X; 
-    Byte Y;
+    Byte X = 0; 
+    Byte Y = 0;
     
-    /* Stack pointer */
-    Byte S;
+    /* Stack pointer starts at 0xFD for some 6502 specific things*/
+    Byte S = 0xFD;
 
     /* For processor state */
     Byte P = 0x0;
@@ -28,8 +27,6 @@ struct MOS_6502
     constexpr static int P_ZERO         = 0b00000010;
     constexpr static int P_CARRY        = 0b00000001;
 
-
-    explicit MOS_6502();
 };
 
 
@@ -40,6 +37,12 @@ struct Memory
 
     Byte readByte(Word address) { return *(memory + address); } 
     void writeByte(Word address, Byte value) { *(memory + address) = value; };
+
+    void stackPushByte(Byte& stack_register, Byte value); 
+    void stackPushWord(Byte& stack_register, Word value); 
+
+    Byte stackPullByte(Byte& stack_register);
+    Word stackPullWord(Byte& stack_register);
 
     // useful locations - zero page is the fastest memory
     constexpr static Word ZERO_PAGE_MAX = 0x00FF;

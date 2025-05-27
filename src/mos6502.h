@@ -149,7 +149,6 @@ private:
 
     /* System */
     void RTI(int opcode);
-    void NOP(int opcode);
 
 private:
     struct MOS_6502 cpu; 

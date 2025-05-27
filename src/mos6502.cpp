@@ -359,15 +359,27 @@ void Emulator::JMP(int opcode)
   cpu.program_counter = (Word)(location - mem.memory);
 }
 
-MOS_6502::MOS_6502() 
-    : program_counter(Memory::ROM_START),
-      stack_pointer(Memory::STACK_BASE),
-      accumulator(0), 
-      X(0), 
-      Y(0), 
-      P(0x34)
-{
 
+/* TODO: UPDATE THE CODE TO SET THE B FLAG once we know about register sttuff*/
+void Emulator::PHA(int opcode)
+{
+  mem.stackPushByte(cpu.S, cpu.accumulator);  
+}
+
+void Emulator::PLA(int opcode)
+{
+  cpu.accumulator = mem.stackPullByte(cpu.S);
+  handleArithmeticFlagChanges(cpu.accumulator);
+}
+
+void Emulator::PHP(int opcode)
+{
+  mem.stackPushByte(cpu.S, cpu.P);
+}
+
+void Emulator::PLP(int opcode)
+{
+  cpu.P = mem.stackPullByte(cpu.S);
 }
 
 void Emulator::initInstructionMap()
@@ -462,5 +474,70 @@ void Emulator::ADC(int opcode)
   Byte* addr = handleAddressing(opcode); 
   Byte operand = *addr; 
   
-  cpu.accumulator += operand; 
+  Byte carry = (MOS_6502::P_CARRY & cpu.P) ? 1 : 0; 
+  Word sum = (Word)operand + (Word)cpu.accumulator + (Word)carry;
+
+  // set carry flag
+  if (sum > 0xFF) 
+  {
+    cpu.P |= MOS_6502::P_CARRY; 
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_CARRY;
+  }
+
+  // set the overflow flag (if its humongous)
+  int is_overflow = (~(cpu.accumulator ^ operand) & (cpu.accumulator ^ (Byte)sum)) & 0x80;
+  if (is_overflow)
+  {
+    cpu.P |= MOS_6502::P_OVERFLOW;
+  }
+  else 
+  {
+    cpu.P &= ~MOS_6502::P_OVERFLOW;
+  }
+
+  cpu.accumulator = sum;
+  // set other flags
+  handleArithmeticFlagChanges(cpu.accumulator);
+}
+
+void Emulator::SBC(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  Byte operand = *addr;
+
+  Byte carry = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
+  Byte acc_before = cpu.accumulator;
+
+  // Invert operand to simulate two's complement subtraction
+  // this is some weird bit magic thing that does subtraction
+  Word sum = (Word)acc_before + (Word)(~operand) + (Word)carry;
+  Byte result = (Byte)sum;
+
+  cpu.accumulator = result;
+
+  // Carry flag = no borrow
+  if (sum < 0x100)
+  {
+    cpu.P |= MOS_6502::P_CARRY;
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_CARRY;
+  }
+
+  // Overflow: check signed overflow
+  bool is_overflow = ((acc_before ^ result) & (~operand ^ result)) & 0x80;
+  if (is_overflow)
+  {
+    cpu.P |= MOS_6502::P_OVERFLOW;
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_OVERFLOW;
+  }
+
+  handleArithmeticFlagChanges(result);
 }
