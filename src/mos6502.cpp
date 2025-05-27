@@ -352,6 +352,13 @@ void Emulator::STY(int opcode)
   *addr = cpu.Y;
 }
 
+void Emulator::JMP(int opcode)
+{
+  Byte* location = handleAddressing(opcode);
+  // jump to that memory location (waoh)
+  cpu.program_counter = (Word)(location - mem.memory);
+}
+
 MOS_6502::MOS_6502() 
     : program_counter(Memory::ROM_START),
       stack_pointer(Memory::STACK_BASE),
@@ -448,4 +455,12 @@ void Emulator::SED(int opcode)
 void Emulator::SEI(int opcode)
 {
   cpu.P |= MOS_6502::P_INT_DISABLE;
+}
+
+void Emulator::ADC(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  Byte operand = *addr; 
+  
+  cpu.accumulator += operand; 
 }
