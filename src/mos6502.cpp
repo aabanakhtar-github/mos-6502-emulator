@@ -259,6 +259,24 @@ void Emulator::INX(int opcode)
   handleArithmeticFlagChanges(cpu.X);
 }
 
+void Emulator::INY(int opcode)
+{
+  cpu.Y++; 
+  handleArithmeticFlagChanges(cpu.Y);
+}
+
+void Emulator::DEX(int opcode)
+{
+  cpu.X--;
+  handleArithmeticFlagChanges(cpu.X);
+}
+
+void Emulator::DEY(int opcode) 
+{
+  cpu.Y--; 
+  handleArithmeticFlagChanges(cpu.Y);
+}
+
 void Emulator::TXA(int opcode)
 {
   cpu.accumulator = cpu.X;
@@ -395,3 +413,26 @@ void Emulator::initInstructionMap()
     // Custom end-of-program instruction
     instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, nullptr}; // nullptr for implementation as it's a custom termination
 }
+
+void Emulator::CLC(int opcode)
+{
+  cpu.P &= ~MOS_6502::P_CARRY;
+}
+
+void Emulator::CLD(int opcode)
+{
+  cpu.P &= ~MOS_6502::P_DECIMAL;
+}
+
+void Emulator::CLI(int opcode)
+{
+  cpu.P &= ~MOS_6502::P_INT_DISABLE; 
+}
+
+
+void Emulator::CLV(int opcode) 
+{
+  cpu.P &= ~MOS_6502::P_OVERFLOW; 
+}
+
+void Emulator::loadROM
