@@ -435,4 +435,17 @@ void Emulator::CLV(int opcode)
   cpu.P &= ~MOS_6502::P_OVERFLOW; 
 }
 
-void Emulator::loadROM
+void Emulator::SEC(int opcode)
+{
+  cpu.P |= MOS_6502::P_CARRY;
+}
+
+void Emulator::SED(int opcode)
+{
+  cpu.P |= MOS_6502::P_DECIMAL;
+}
+
+void Emulator::SEI(int opcode)
+{
+  cpu.P |= MOS_6502::P_INT_DISABLE;
+}
