@@ -232,25 +232,14 @@ Byte* Emulator::indirectIndexed()
 /* do nothing */
 void Emulator::NOP(int opcode)
 {
+  ((void)sizeof(char[1 - 2 * !!(printf(""))]));
 }
 
 void Emulator::ORA(int opcode)
 {
   Byte* addr = handleAddressing(opcode);
   cpu.accumulator |= *addr; 
-
-  cpu.P &= ~MOS_6502::P_ZERO; 
-  cpu.P &= ~MOS_6502::P_NEGATIVE;
-  
-  if (*addr == 0) 
-  {
-    cpu.P |= MOS_6502::P_ZERO;
-  }
-
-  if (IS_BIT_ON(*addr, 7)) // is negative bit sign on
-  {
-    cpu.P |= MOS_6502::P_NEGATIVE;
-  }
+  handleArithmeticFlagChanges(cpu.accumulator)
 }
 
 void Emulator::INX(int opcode) 
@@ -359,6 +348,18 @@ void Emulator::JMP(int opcode)
   cpu.program_counter = (Word)(location - mem.memory);
 }
 
+void Emulator::JSR(int opcode)
+{
+  Byte* location = handleAddressing(opcode); 
+  mem.stackPushWord(cpu.S, cpu.program_counter - 2); // push the return address TODO: add -1 if this doesn't work
+  cpu.program_counter = Word(location - mem.memory);
+}
+
+void Emulator::RTS(int opcode)
+{
+  Word return_address = mem.stackPullWord(cpu.S); 
+  cpu.program_counter = return_address;
+}
 
 /* TODO: UPDATE THE CODE TO SET THE B FLAG once we know about register sttuff*/
 void Emulator::PHA(int opcode)
@@ -380,6 +381,20 @@ void Emulator::PHP(int opcode)
 void Emulator::PLP(int opcode)
 {
   cpu.P = mem.stackPullByte(cpu.S);
+}
+
+void Emulator::AND(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  cpu.accumulator &= *addr;
+  handleArithmeticFlagChanges(cpu.accumulator);
+}
+
+void Emulator::EOR(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  cpu.accumulator ^= *addr;
+  handleArithmeticFlagChanges(cpu.accumulator);
 }
 
 void Emulator::initInstructionMap()
@@ -540,4 +555,78 @@ void Emulator::SBC(int opcode)
   }
 
   handleArithmeticFlagChanges(result);
+}
+
+void Emulator::ASL(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  Byte should_carry = 0x80 & *addr; 
+  *addr = ((*addr << 1) & 0xFF);  // shift one right and maintain 8 bits
+
+  if (should_carry) 
+  {
+    cpu.P |= MOS_6502::P_CARRY;
+  } 
+  else
+  {
+    cpu.P &= ~MOS_6502::P_CARRY;
+  }
+
+  handleArithmeticFlagChanges(*addr);
+}
+
+void Emulator::LSR(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  Byte should_carry = *addr & 1; // least significant bit
+  *addr = ((*addr >> 1) & 0xFF); 
+
+  if (should_carry) 
+  {
+    cpu.P |= MOS_6502::P_CARRY;
+  } 
+  else
+  {
+    cpu.P &= ~MOS_6502::P_CARRY;
+  }
+
+  handleArithmeticFlagChanges(*addr);
+}
+
+void Emulator::ROL(int opcode)
+{
+  Byte* addr = handleAddressing(opcode); 
+  Byte should_carry = *addr & 0x80;
+  Byte _0_bit_val = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
+  *addr = (*addr << 1) | (_0_bit_val);
+
+  if (should_carry) 
+  {
+    cpu.P |= MOS_6502::P_CARRY;
+  } 
+  else
+  {
+    cpu.P &= ~MOS_6502::P_CARRY;
+  }
+
+  handleArithmeticFlagChanges(*addr);
+}
+
+void Emulator::ROR(int opcode)
+{
+  Byte* addr = handleAddressing(opcode);
+  Byte original_bit0 = *addr & 0x01; 
+  Byte carry_in = (cpu.P & MOS_6502::P_CARRY) ? 0x80 : 0;
+  *addr = (*addr >> 1) | carry_in; // 7th bit
+
+  if (original_bit0)
+  {
+    cpu.P |= MOS_6502::P_CARRY;
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_CARRY;
+  }
+
+  handleArithmeticFlagChanges(*addr);
 }

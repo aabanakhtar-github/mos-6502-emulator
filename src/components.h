@@ -18,14 +18,14 @@ struct MOS_6502
     Byte P = 0x0;
 
     /* Bit fields for the P register */
-    constexpr static int P_NEGATIVE     = 0b10000000;
-    constexpr static int P_OVERFLOW     = 0b01000000;
-    constexpr static int P_UNUSED       = 0b00100000;  // not typically used
-    constexpr static int P_BREAK        = 0b00010000;
-    constexpr static int P_DECIMAL      = 0b00001000;
-    constexpr static int P_INT_DISABLE  = 0b00000100;
-    constexpr static int P_ZERO         = 0b00000010;
-    constexpr static int P_CARRY        = 0b00000001;
+    constexpr static Byte  P_NEGATIVE     = 0b10000000;
+    constexpr static Byte P_OVERFLOW     = 0b01000000;
+    constexpr static Byte P_UNUSED       = 0b00100000;  // not typically used
+    constexpr static Byte P_BREAK        = 0b00010000;
+    constexpr static Byte P_DECIMAL      = 0b00001000;
+    constexpr static Byte P_INT_DISABLE  = 0b00000100;
+    constexpr static Byte P_ZERO         = 0b00000010;
+    constexpr static Byte P_CARRY        = 0b00000001;
 
 };
 

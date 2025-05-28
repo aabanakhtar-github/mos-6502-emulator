@@ -63,7 +63,6 @@ private:
     Byte* indexedIndirect(); 
     Byte* indirectIndexed(); 
 
-
     void initInstructionMap();
     /* No operation */
     void NOP(int opcode);
