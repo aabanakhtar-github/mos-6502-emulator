@@ -1,6 +1,10 @@
 #include "catch2/catch_all.hpp"
+#include "harte_test.h"
+#include <string>
 
-TEST_CASE("Load into Accumulator [LDA]") 
+constexpr static auto TEST_JSON_PATH = "testing/ProcessorTests/6502/v1/";
+
+TEST_CASE("ORA - OR with accumulator - IMMEDIATE MODE") 
 {
-    REQUIRE(false == true);
+    HarteTest test(std::string(TEST_JSON_PATH) + "09.json");
 }
