@@ -2,6 +2,22 @@
 
 struct MOS_6502 
 {
+    bool operator==(const MOS_6502& rhs) const 
+    {
+        auto& lhs = *this; 
+        return lhs.program_counter == rhs.program_counter &&
+        lhs.accumulator     == rhs.accumulator &&
+        lhs.X               == rhs.X &&
+        lhs.Y               == rhs.Y &&
+        lhs.S               == rhs.S &&
+        lhs.P               == rhs.P;
+    }
+
+    bool operator!=(const MOS_6502& rhs) const 
+    {
+        return this->operator==(rhs);
+    }
+
     Word program_counter; 
 
     /* For all arithmetic operations*/
@@ -18,7 +34,7 @@ struct MOS_6502
     Byte P = 0x0;
 
     /* Bit fields for the P register */
-    constexpr static Byte  P_NEGATIVE     = 0b10000000;
+    constexpr static Byte  P_NEGATIVE    = 0b10000000;
     constexpr static Byte P_OVERFLOW     = 0b01000000;
     constexpr static Byte P_UNUSED       = 0b00100000;  // not typically used
     constexpr static Byte P_BREAK        = 0b00010000;

@@ -239,7 +239,7 @@ void Emulator::ORA(int opcode)
 {
   Byte* addr = handleAddressing(opcode);
   cpu.accumulator |= *addr; 
-  handleArithmeticFlagChanges(cpu.accumulator)
+  handleArithmeticFlagChanges(cpu.accumulator);
 }
 
 void Emulator::INX(int opcode) 

@@ -42,6 +42,11 @@ struct Instruction
 class Emulator 
 {
 public:
+    struct MOS_6502 cpu; 
+    struct Memory mem;
+    Instruction instruction_map[0xFF];
+
+public:
     void loadROM(const std::vector<Byte>& program);
     void run();
 
@@ -90,7 +95,7 @@ private:
     void DEY(int opcode);
 
     /* Break (interrupt) */
-    void BRK(int opcode);
+    void BRK(int opcode) {};
 
     /* Store registers to memory */
     void STA(int opcode);
@@ -148,11 +153,6 @@ private:
 
     /* System */
     void RTI(int opcode);
-
-private:
-    struct MOS_6502 cpu; 
-    struct Memory mem;
-    Instruction instruction_map[0xFF];
 };
 
 // 256 insturction set architecture
