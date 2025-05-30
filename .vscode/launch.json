@@ -1,0 +1,9 @@
+{
+  "name": "Debug CTest",
+  "type": "cppdbg",
+  "request": "launch",
+  "program": "${cmake.testProgram}",
+  "args": ["${cmake.testArgs}"],
+  "cwd": "${workspaceFolder}",
+  // other configurations...
+}

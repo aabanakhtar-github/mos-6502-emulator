@@ -1,19 +1,12 @@
 #include "harte_test.h"
 #include <fstream>
+#include "catch2/catch_all.hpp"
 
 using namespace nlohmann;
 
 HarteTest::HarteTest(const std::string& file)
 {
-    std::ifstream f(file);
-    if (!f.is_open()) { return; }
-    
-    std::stringstream buf; 
-    buf << f.rdbuf(); 
-    std::string as_string = buf.str(); 
-
-    json = json::parse(as_string);
-    f.close();
+    auto json = json::parse(file);
 
     // TODO: just use cpu struct instead
     // load up the values
@@ -49,7 +42,7 @@ HarteTest::HarteTest(const std::string& file)
 
 bool HarteTest::run() 
 {
-    Emulator testbed; 
+    Emulator testbed;
     testbed.cpu = initial_state.cpu;
     for (auto& [addr, val] : initial_mem_state.mem_states) 
     {
@@ -57,7 +50,7 @@ bool HarteTest::run()
     }
 
     testbed.run(); 
-
+    
     if (testbed.cpu != final_state.cpu) 
     {
         return false; 

@@ -11,7 +11,6 @@ using namespace std::placeholders;
 void Emulator::loadROM(const std::vector<Byte>& program) 
 {
   // define our instructions
-  initInstructionMap();
   if (Memory::ROM_END - Memory::ROM_START < program.size()) 
   {
     std::cerr << "Cannot install ROM, too big." << std::endl;
@@ -27,7 +26,7 @@ void Emulator::run()
   {
     int opcode = mem.readByte(cpu.program_counter);
     // special opcode for terminating the program (added by emulator) 
-    if (opcode == 0xFF - 1)
+    if (opcode == 0xFE)
     {
       break;
     }
@@ -399,6 +398,11 @@ void Emulator::EOR(int opcode)
 
 void Emulator::initInstructionMap()
 {
+    for (auto& i : instruction_map) 
+    {
+      i = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int){}}; // nullptr for implementation as it's a custom termination
+    }
+
     auto MAKE_BINDING = [&](void (Emulator::*member_func_ptr)(int)) {
         return std::function<void(Byte)>(std::bind(member_func_ptr, this, _1));
     };
@@ -445,7 +449,7 @@ void Emulator::initInstructionMap()
     instruction_map[0xEA] = {"NOP", 0xEA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::NOP)};
 
     // Custom end-of-program instruction
-    instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, nullptr}; // nullptr for implementation as it's a custom termination
+    instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int){}}; // nullptr for implementation as it's a custom termination
 }
 
 void Emulator::CLC(int opcode)

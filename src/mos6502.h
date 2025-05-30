@@ -46,6 +46,8 @@ public:
     struct Memory mem;
     Instruction instruction_map[0xFF];
 
+
+    explicit Emulator() { initInstructionMap(); }
 public:
     void loadROM(const std::vector<Byte>& program);
     void run();
