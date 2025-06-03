@@ -34,7 +34,7 @@ struct MOS_6502
     Byte P = 0x0;
 
     /* Bit fields for the P register */
-    constexpr static Byte  P_NEGATIVE    = 0b10000000;
+    constexpr static Byte P_NEGATIVE    = 0b10000000;
     constexpr static Byte P_OVERFLOW     = 0b01000000;
     constexpr static Byte P_UNUSED       = 0b00100000;  // not typically used
     constexpr static Byte P_BREAK        = 0b00010000;

@@ -669,3 +669,136 @@ void Emulator::CMP(int opcode)
   else
     cpu.P &= ~MOS_6502::P_NEGATIVE;
 }
+
+void Emulator::CPX(int opcode)
+{
+  Byte *addr = handleAddressing(opcode);
+
+  // Compare: X - M
+  Byte X = cpu.X;
+  Byte M = *addr;
+  Byte result = X - M;
+
+  if (X == M)
+    cpu.P |= MOS_6502::P_ZERO;
+  else
+    cpu.P &= ~MOS_6502::P_ZERO;
+
+  if (X >= M)
+    cpu.P |= MOS_6502::P_CARRY;
+  else
+    cpu.P &= ~MOS_6502::P_CARRY;
+
+  // Set Negative flag if bit 7 of (A - M) is set
+  if (result & 0x80)
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  else
+    cpu.P &= ~MOS_6502::P_NEGATIVE;
+}
+
+void Emulator::CPY(int opcode)
+{
+  Byte *addr = handleAddressing(opcode);
+
+  Byte Y = cpu.Y;
+  Byte M = *addr;
+  Byte result = Y - M;
+
+  if (Y == M)
+    cpu.P |= MOS_6502::P_ZERO;
+  else
+    cpu.P &= ~MOS_6502::P_ZERO;
+
+  if (Y >= M)
+    cpu.P |= MOS_6502::P_CARRY;
+  else
+    cpu.P &= ~MOS_6502::P_CARRY;
+
+  // Set Negative flag if bit 7 of (A - M) is set
+  if (result & 0x80)
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  else
+    cpu.P &= ~MOS_6502::P_NEGATIVE;
+}
+
+void Emulator::CPX(int opcode)
+{
+  Byte *addr = handleAddressing(opcode);
+
+  // Compare: X - M
+  Byte Y = cpu.X;
+  Byte M = *addr;
+  Byte result = Y - M;
+
+  if (Y == M)
+    cpu.P |= MOS_6502::P_ZERO;
+  else
+    cpu.P &= ~MOS_6502::P_ZERO;
+
+  if (Y >= M)
+    cpu.P |= MOS_6502::P_CARRY;
+  else
+    cpu.P &= ~MOS_6502::P_CARRY;
+
+  // Set Negative flag if bit 7 of (A - M) is set
+  if (result & 0x80)
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  else
+    cpu.P &= ~MOS_6502::P_NEGATIVE;
+}
+
+void Emulator::branchIf(bool condition, SignedByte offset)
+{
+  if (condition) 
+  {
+    cpu.program_counter += offset;
+  }
+}
+
+void Emulator::BCC(int opcode)
+{
+  SignedByte offset = *handleAddressing(opcode);
+  branchIf((cpu.P & MOS_6502::P_CARRY) == 0, offset); 
+}
+
+void Emulator::BCS(int opcode) 
+{
+  SignedByte offset = *handleAddressing(opcode); 
+  branchIf(cpu.P & MOS_6502::P_CARRY, offset);
+}
+
+void Emulator::BEQ(int opcode) 
+{
+  SignedByte offset = *handleAddressing(opcode); 
+  branchIf(cpu.P & MOS_6502::P_ZERO, offset);
+}
+
+void Emulator::BMI(int opcode)
+{
+  SignedByte offset = *handleAddressing(opcode); 
+  branchIf(cpu.P & MOS_6502::P_NEGATIVE, offset);
+}
+
+void Emulator::BNE(int opcode)
+{
+  SignedByte offset = *handleAddressing(opcode); 
+  branchIf((cpu.P & MOS_6502::P_ZERO) == 0, offset);
+}
+
+void Emulator::BPL(int opcode)
+{
+  SignedByte offset = *handleAddressing(opcode); 
+  branchIf((cpu.P & MOS_6502::P_NEGATIVE) == 0, offset);
+}
+
+void Emulator::BVC(int opcode)
+{
+  SignedByte offset = *handleAddressing(opcode);
+  branchIf((cpu.P & MOS_6502::P_OVERFLOW) == 0, offset);
+}
+
+void Emulator::BVS(int opcode)
+{
+  SignedByte offset = *handleAddressing(opcode);
+  branchIf(cpu.P & MOS_6502::P_OVERFLOW, offset);
+}
