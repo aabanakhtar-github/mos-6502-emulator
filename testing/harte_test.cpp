@@ -1,6 +1,8 @@
 #include "harte_test.h"
 #include <fstream>
 #include "catch2/catch_all.hpp"
+#include <iostream> 
+
 
 using namespace nlohmann;
 
@@ -43,6 +45,7 @@ HarteTest::HarteTest(const std::string& file)
 bool HarteTest::run() 
 {
     Emulator testbed;
+    testbed.testing = true;
     testbed.cpu = initial_state.cpu;
     for (auto& [addr, val] : initial_mem_state.mem_states) 
     {

@@ -42,6 +42,7 @@ struct Instruction
 class Emulator 
 {
 public:
+    bool testing = false;
     struct MOS_6502 cpu; 
     struct Memory mem;
     Instruction instruction_map[0xFF];
