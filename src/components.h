@@ -18,7 +18,7 @@ struct MOS_6502
         return this->operator==(rhs);
     }
 
-    Word program_counter; 
+    Word program_counter = 0x8000; 
 
     /* For all arithmetic operations*/
     Byte accumulator = 0; 

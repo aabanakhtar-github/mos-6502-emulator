@@ -447,6 +447,8 @@ void Emulator::initInstructionMap()
   instruction_map[0x81] = {"STA", 0x81, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::STA)}; // (Indirect,X)
   instruction_map[0x91] = {"STA", 0x91, 2, 6, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::STA)}; // (Indirect),Y
 
+  
+
   // Miscellaneous
   instruction_map[0xAA] = {"TAX", 0xAA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TAX)};
   instruction_map[0xE8] = {"INX", 0xE8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::INX)};
@@ -701,32 +703,6 @@ void Emulator::CPY(int opcode)
   Byte *addr = handleAddressing(opcode);
 
   Byte Y = cpu.Y;
-  Byte M = *addr;
-  Byte result = Y - M;
-
-  if (Y == M)
-    cpu.P |= MOS_6502::P_ZERO;
-  else
-    cpu.P &= ~MOS_6502::P_ZERO;
-
-  if (Y >= M)
-    cpu.P |= MOS_6502::P_CARRY;
-  else
-    cpu.P &= ~MOS_6502::P_CARRY;
-
-  // Set Negative flag if bit 7 of (A - M) is set
-  if (result & 0x80)
-    cpu.P |= MOS_6502::P_NEGATIVE;
-  else
-    cpu.P &= ~MOS_6502::P_NEGATIVE;
-}
-
-void Emulator::CPX(int opcode)
-{
-  Byte *addr = handleAddressing(opcode);
-
-  // Compare: X - M
-  Byte Y = cpu.X;
   Byte M = *addr;
   Byte result = Y - M;
 

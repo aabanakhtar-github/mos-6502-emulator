@@ -52,7 +52,7 @@ public:
     Byte pc_lower = mem.memory[0xFFFC];
     Byte pc_higher = mem.memory[0xFFFD];
     Word pc = (Word)pc_higher << 8 | (Word)pc_lower;
-    cpu.program_counter = pc;
+    cpu.program_counter = 0x8000; // TODO: fix up
     initInstructionMap();
   }
 
