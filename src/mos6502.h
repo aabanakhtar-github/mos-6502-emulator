@@ -52,7 +52,7 @@ public:
     Byte pc_lower = mem.memory[0xFFFC];
     Byte pc_higher = mem.memory[0xFFFD];
     Word pc = (Word)pc_higher << 8 | (Word)pc_lower;
-    cpu.program_counter = 0x8000; // TODO: fix up
+    cpu.program_counter = pc; // TODO: fix up
     initInstructionMap();
   }
 
@@ -103,9 +103,10 @@ private:
   void INY(int opcode);
   void DEX(int opcode);
   void DEY(int opcode);
+  void INC(int opcode);
 
   /* Break (interrupt) */
-  void BRK(int opcode) {};
+  void BRK(int opcode);
 
   /* Store registers to memory */
   void STA(int opcode);
@@ -152,6 +153,7 @@ private:
   void BPL(int opcode);
   void BVC(int opcode);
   void BVS(int opcode);
+  void BIT(int opcode);
 
   /* Status flag control */
   void CLC(int opcode);

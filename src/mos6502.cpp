@@ -272,6 +272,28 @@ void Emulator::DEY(int opcode)
   handleArithmeticFlagChanges(cpu.Y);
 }
 
+void Emulator::INC(int opcode)
+{
+  Byte* location = handleAddressing(opcode);
+  *location += 1;
+  handleArithmeticFlagChanges(*location);
+}
+
+void Emulator::BRK(int opcode)
+{
+  // simulate pad byte
+  cpu.program_counter++; 
+  mem.stackPushWord(cpu.S, cpu.program_counter);          // Push PC
+  mem.stackPushByte(cpu.S, cpu.P | MOS_6502::P_BREAK | MOS_6502::P_UNUSED); // Push status
+
+  // disable interrupts (we are one)
+  cpu.P |= MOS_6502::P_INT_DISABLE;
+
+  Byte low = mem.readByte(0xFFFE);
+  Byte high = mem.readByte(0xFFFF);
+  cpu.program_counter = ((Word)high << 8) | low;
+}
+
 void Emulator::TXA(int opcode)
 {
   cpu.accumulator = cpu.X;
@@ -415,52 +437,79 @@ void Emulator::initInstructionMap()
     return std::function<void(Byte)>(std::bind(member_func_ptr, this, _1));
   };
 
-  // BRK - Break
+  instruction_map[0x70] = {"BVS", 0x70, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BVS)};
   instruction_map[0x00] = {"BRK", 0x00, 1, 7, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::BRK)};
-
-  // ORA - Logical Inclusive OR
-  instruction_map[0x01] = Instruction{"ORA", 0x01, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::ORA)}; // (Indirect,X)
-  instruction_map[0x05] = {"ORA", 0x05, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::ORA)};
-  instruction_map[0x15] = {"ORA", 0x15, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ORA)};
-  instruction_map[0x09] = {"ORA", 0x09, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::ORA)};
-  instruction_map[0x0D] = {"ORA", 0x0D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ORA)};
-  instruction_map[0x1D] = {"ORA", 0x1D, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ORA)};   // Cycles typically 4+ if page boundary crossed
-  instruction_map[0x19] = {"ORA", 0x19, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::ORA)};   // Cycles typically 4+ if page boundary crossed
-  instruction_map[0x11] = {"ORA", 0x11, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::ORA)}; // (Indirect),Y, cycles typically 5+ if page boundary crossed
-
-  // LDA - Load Accumulator
+  instruction_map[0xC9] = {"CMP", 0xC9, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xC5] = {"CMP", 0xC5, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xD5] = {"CMP", 0xD5, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xCD] = {"CMP", 0xCD, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xDD] = {"CMP", 0xDD, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xD9] = {"CMP", 0xD9, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xC1] = {"CMP", 0xC1, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xD1] = {"CMP", 0xD1, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::CMP)};
+  instruction_map[0xE0] = {"CPX", 0xE0, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::CPX)};
+  instruction_map[0xE4] = {"CPX", 0xE4, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::CPX)};
+  instruction_map[0xEC] = {"CPX", 0xEC, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::CPX)};
+  instruction_map[0xC0] = {"CPY", 0xC0, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::CPY)};
+  instruction_map[0xC4] = {"CPY", 0xC4, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::CPY)};
+  instruction_map[0xCC] = {"CPY", 0xCC, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::CPY)};
+  instruction_map[0xCA] = {"DEX", 0xCA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::DEX)};
+  instruction_map[0x88] = {"DEY", 0x88, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::DEY)};
+  instruction_map[0x49] = {"EOR", 0x49, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x45] = {"EOR", 0x45, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x55] = {"EOR", 0x55, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x4D] = {"EOR", 0x4D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x5D] = {"EOR", 0x5D, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x59] = {"EOR", 0x59, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x41] = {"EOR", 0x41, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0x51] = {"EOR", 0x51, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::EOR)};
+  instruction_map[0xE8] = {"INX", 0xE8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::INX)};
+  instruction_map[0xC8] = {"INY", 0xC8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::INY)};
+  instruction_map[0x4C] = {"JMP", 0x4C, 3, 3, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::JMP)};
+  instruction_map[0x6C] = {"JMP", 0x6C, 3, 5, AddressMode::INDIRECT, MAKE_BINDING(&Emulator::JMP)};
+  instruction_map[0x20] = {"JSR", 0x20, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::JSR)};
   instruction_map[0xA9] = {"LDA", 0xA9, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::LDA)};
   instruction_map[0xA5] = {"LDA", 0xA5, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::LDA)};
   instruction_map[0xB5] = {"LDA", 0xB5, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::LDA)};
   instruction_map[0xAD] = {"LDA", 0xAD, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::LDA)};
-  instruction_map[0xBD] = {"LDA", 0xBD, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::LDA)};   // Cycles typically 4+ if page boundary crossed
-  instruction_map[0xB9] = {"LDA", 0xB9, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::LDA)};   // Cycles typically 4+ if page boundary crossed
-  instruction_map[0xA1] = {"LDA", 0xA1, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::LDA)}; // (Indirect,X)
-  instruction_map[0xB1] = {"LDA", 0xB1, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::LDA)}; // (Indirect),Y, cycles typically 5+ if page boundary crossed
-
-  // STA - Store Accumulator
+  instruction_map[0xBD] = {"LDA", 0xBD, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::LDA)};
+  instruction_map[0xB9] = {"LDA", 0xB9, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::LDA)};
+  instruction_map[0xA1] = {"LDA", 0xA1, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::LDA)};
+  instruction_map[0xB1] = {"LDA", 0xB1, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::LDA)};
+  instruction_map[0xA2] = {"LDX", 0xA2, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::LDX)};
+  instruction_map[0xA6] = {"LDX", 0xA6, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::LDX)};
+  instruction_map[0xB6] = {"LDX", 0xB6, 2, 4, AddressMode::ZERO_PAGE_AND_Y, MAKE_BINDING(&Emulator::LDX)};
+  instruction_map[0xAE] = {"LDX", 0xAE, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::LDX)};
+  instruction_map[0xBE] = {"LDX", 0xBE, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::LDX)};
+  instruction_map[0xA0] = {"LDY", 0xA0, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::LDY)};
+  instruction_map[0xA4] = {"LDY", 0xA4, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::LDY)};
+  instruction_map[0xB4] = {"LDY", 0xB4, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::LDY)};
+  instruction_map[0xAC] = {"LDY", 0xAC, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::LDY)};
+  instruction_map[0xBC] = {"LDY", 0xBC, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::LDY)};
+  instruction_map[0x4A] = {"LSR", 0x4A, 1, 2, AddressMode::ACCUMULATOR, MAKE_BINDING(&Emulator::LSR)};
+  instruction_map[0x46] = {"LSR", 0x46, 2, 5, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::LSR)};
+  instruction_map[0x56] = {"LSR", 0x56, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::LSR)};
+  instruction_map[0x4E] = {"LSR", 0x4E, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::LSR)};
+  instruction_map[0x5E] = {"LSR", 0x5E, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::LSR)};
+  instruction_map[0xEA] = {"NOP", 0xEA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::NOP)};
+  instruction_map[0x09] = {"ORA", 0x09, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x05] = {"ORA", 0x05, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x15] = {"ORA", 0x15, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x0D] = {"ORA", 0x0D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x1D] = {"ORA", 0x1D, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x19] = {"ORA", 0x19, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x01] = {"ORA", 0x01, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::ORA)};
+  instruction_map[0x11] = {"ORA", 0x11, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::ORA)};
+    // STA - Store Accumulator
   instruction_map[0x85] = {"STA", 0x85, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::STA)};
   instruction_map[0x95] = {"STA", 0x95, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::STA)};
   instruction_map[0x8D] = {"STA", 0x8D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::STA)};
-  instruction_map[0x9D] = {"STA", 0x9D, 3, 5, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::STA)};   // Store instructions don't have page cross penalty
-  instruction_map[0x99] = {"STA", 0x99, 3, 5, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::STA)};   // Store instructions don't have page cross penalty
+  instruction_map[0x9D] = {"STA", 0x9D, 3, 5, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::STA)};
+  instruction_map[0x99] = {"STA", 0x99, 3, 5, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::STA)};
   instruction_map[0x81] = {"STA", 0x81, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::STA)}; // (Indirect,X)
   instruction_map[0x91] = {"STA", 0x91, 2, 6, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::STA)}; // (Indirect),Y
 
-  
-
-  // Miscellaneous
-  instruction_map[0xAA] = {"TAX", 0xAA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TAX)};
-  instruction_map[0xE8] = {"INX", 0xE8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::INX)};
-
-  instruction_map[0x4C] = {"JMP", 0x4C, 3, 3, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::JMP)};
-  instruction_map[0x6C] = {"JMP", 0x6C, 3, 5, AddressMode::INDIRECT, MAKE_BINDING(&Emulator::JMP)};
-
-  instruction_map[0xEA] = {"NOP", 0xEA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::NOP)};
-
-  instruction_map[0xC9] = {"CMP", 0xC9, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::CMP)};
-
-  // Custom end-of-program instruction
+    // Custom end-of-program instruction
   instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
 }
 
@@ -497,6 +546,17 @@ void Emulator::SED(int opcode)
 void Emulator::SEI(int opcode)
 {
   cpu.P |= MOS_6502::P_INT_DISABLE;
+}
+
+void Emulator::RTI(int opcode)
+{
+  // get our status restored
+  cpu.P = mem.stackPullByte(cpu.S);
+  cpu.P &= ~MOS_6502::P_BREAK;
+  // this should be set to 1 all times
+  cpu.P |= MOS_6502::P_UNUSED;
+
+  cpu.program_counter = mem.stackPullWord(cpu.S);
 }
 
 void Emulator::ADC(int opcode)
@@ -778,3 +838,41 @@ void Emulator::BVS(int opcode)
   SignedByte offset = *handleAddressing(opcode);
   branchIf(cpu.P & MOS_6502::P_OVERFLOW, offset);
 }
+
+void Emulator::BIT(int opcode)
+{
+  Byte* addr = handleAddressing(opcode);
+  Byte value = *addr;
+  Byte result = cpu.accumulator & value;
+
+  // Set or clear zero flag based on accumulator & memory
+  if (result == 0)
+  {
+    cpu.P |= MOS_6502::P_ZERO;
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_ZERO;
+  }
+
+  // Set Negative flag to bit 7 of memory operand
+  if (value & 0x80)
+  {
+    cpu.P |= MOS_6502::P_NEGATIVE;
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_NEGATIVE;
+  }
+
+  // Set Overflow flag to bit 6 of memory operand
+  if (value & 0x40)
+  {
+    cpu.P |= MOS_6502::P_OVERFLOW;
+  }
+  else
+  {
+    cpu.P &= ~MOS_6502::P_OVERFLOW;
+  }
+}
+

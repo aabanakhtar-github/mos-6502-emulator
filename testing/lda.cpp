@@ -54,7 +54,7 @@ void testCase(const std::string &name)
     }
 }
 
-TEST_CASE("c9 - CMP - Imediate Mode")
+TEST_CASE("c9 - LDA - Immediate Mode")
 {
     testCase("c9.json");
 }

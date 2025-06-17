@@ -3,6 +3,8 @@ A full emulator for the 6502, with simulated hardware bugs included, in readable
 
 # todo 
 b-flag and interrupts
+bti and inc 
+proper pc loading
 
 # building
 coming soon. 
