@@ -59,6 +59,7 @@ public:
 public:
   void loadROM(const std::vector<Byte> &program);
   void run();
+  bool cycle(); 
 
 private:
   void handleArithmeticFlagChanges(Byte value);

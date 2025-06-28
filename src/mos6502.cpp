@@ -24,27 +24,36 @@ void Emulator::loadROM(const std::vector<Byte> &program)
 
 void Emulator::run()
 {
-  std::cout << "gyatt" << std::endl;
   while (cpu.program_counter < Memory::ROM_END)
   {
+    if (!cycle()) 
+    {
+      break;
+    }
+  }
+}
+
+bool Emulator::cycle()
+{
     if (testing)
     {
     }
 
     int opcode = mem.readByte(cpu.program_counter);
-    // special opcode for terminating the program (added by emulator)
-    if (opcode == 0xFE)
+    auto instruction = instruction_map[opcode];
+
+    if (instruction.name == "DONE") 
     {
-      break;
+      // invalid opcode, so get out of here asap
+      return false;
     }
 
-    auto instruction = instruction_map[opcode];
+
     instruction.implementation(opcode);
     // simulate the delay
-    if (!testing)
-      DELAY_CYCLES(instruction_map, opcode);
     cpu.program_counter++;
-  }
+
+    return true;
 }
 
 void Emulator::handleArithmeticFlagChanges(Byte value)
@@ -429,7 +438,7 @@ void Emulator::initInstructionMap()
 {
   for (auto &i : instruction_map)
   {
-    i = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
+    i = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, nullptr}; // nullptr for implementation as it's a custom termination
   }
 
   auto MAKE_BINDING = [&](void (Emulator::*member_func_ptr)(int))

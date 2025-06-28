@@ -40,10 +40,15 @@ HarteTest::HarteTest(const std::string& file)
             std::make_pair((std::size_t)pair[0], (Byte)pair[1])
         );
     }
+
+    cycles = json["cycles"].size();
 }
 
 bool HarteTest::run() 
 {
+    static int id = 0;
+    std::cout << "Running case... #" << id++ << std::endl;
+
     Emulator testbed;
     testbed.testing = true;
     testbed.cpu = initial_state.cpu;
@@ -52,17 +57,22 @@ bool HarteTest::run()
         testbed.mem.memory[addr] = val;
     }
 
-    testbed.run(); 
+    // execute the instruction
+    testbed.cycle(); 
+        
+    REQUIRE((int)testbed.cpu.accumulator == (int)final_state.cpu.accumulator);
+    REQUIRE((int)testbed.cpu.X == (int)final_state.cpu.X);
+    REQUIRE((int)testbed.cpu.Y == (int)final_state.cpu.Y);
+    REQUIRE((int)testbed.cpu.program_counter == (int)final_state.cpu.program_counter);
+    REQUIRE((int)testbed.cpu.S == (int)final_state.cpu.S);
+    REQUIRE((int)testbed.cpu.P == (int)final_state.cpu.P); // Processor status flags
     
-    if (testbed.cpu != final_state.cpu) 
-    {
-        return false; 
-    }
-
     for (auto& [addr, val] : final_mem_state.mem_states) 
     {
         if (testbed.mem.memory[addr] != val) 
         {
+            INFO("Fail! ");
+            FAIL("MEM STATE DOESN'T MATCH");
             return false;
         }
     }

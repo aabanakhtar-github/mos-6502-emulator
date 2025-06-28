@@ -11,7 +11,7 @@ int main(int argc, char* argv[])
                             std::istreambuf_iterator<char>()};
 
     std::vector<Byte> buf(begin(cbuf), end(cbuf));
-    buf.push_back(0xFF - 1);
+    buf.push_back(0xFE);
 
 
     for (auto byte : buf) 

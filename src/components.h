@@ -1,4 +1,5 @@
 #include "types.h"
+#include "cstddef"
 
 struct MOS_6502 
 {
@@ -31,7 +32,7 @@ struct MOS_6502
     Byte S = 0xFD;
 
     /* For processor state */
-    Byte P = 0x0;
+    Byte P = P_UNUSED;
 
     /* Bit fields for the P register */
     constexpr static Byte P_NEGATIVE    =  0b10000000;
@@ -50,6 +51,15 @@ struct MOS_6502
 struct Memory
 {
     Byte memory[WORD_MAX + 1];
+    bool did_write = false; // used in test suite
+
+    Memory()
+    {
+       for (size_t i = 0x8000; i < sizeof(memory); ++i) 
+       {
+            memory[i] = 0xFE; // to terminate the program asap for testing
+       } 
+    }
 
     Byte readByte(Word address) { return *(memory + address); } 
     void writeByte(Word address, Byte value) { *(memory + address) = value; };

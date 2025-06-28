@@ -19,12 +19,15 @@ class HarteTest
 public:
     explicit HarteTest(const std::string& file);
     bool run();
-private:
+    
     nlohmann::json json;
     Emulator initial_state;
-    MemoryState initial_mem_state;  
+    MemoryState initial_mem_state;
+
     Emulator final_state;
     MemoryState final_mem_state;
+
+    size_t cycles; 
 };
 
 #endif // HARTE_TEST_H

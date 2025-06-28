@@ -39,7 +39,7 @@ target_link_libraries(${PROJECT_NAME} EmulatorCore)
 
 set(TESTS
     testing/harte_test.h
-    testing/lda.cpp
+    testing/immediate_opcodes.cpp
     testing/harte_test.cpp
 )
 

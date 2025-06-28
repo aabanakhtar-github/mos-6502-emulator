@@ -6,6 +6,8 @@
 #include "nlohmann/json.hpp"
 #include <iostream>
 
+// aint tryna test 9000 cases bruh
+constexpr static size_t MAX_TESTS = 9000;
 constexpr static auto TEST_JSON_PATH = "../testing/ProcessorTests/6502/v1/";
 using namespace nlohmann;
 
@@ -33,41 +35,24 @@ std::vector<json> getTestCases(const std::string &filename)
     }
 }
 
-void testCase(const std::string &name)
+TEST_CASE("6502 Harte Functional Tests - LDA a9 IMMEDIATE")
 {
-    auto cases = getTestCases(TEST_JSON_PATH + name);
-    int i = 0;
-    for (const auto &test : cases)
-    {
-        i++;
-        if (i > 30) // codespaces are slow
-        {
-            break;
-        }
+    auto cases = getTestCases(TEST_JSON_PATH + std::string{"a9.json"});
 
-        std::string name = test["name"];
-        SECTION(name.c_str())
-        {
-            HarteTest testbed(test.dump());
-            REQUIRE(testbed.run() == true);
-        }
+    for (int i = 0; i < cases.size() && i < MAX_TESTS; ++i)
+    {
+        auto testbed = HarteTest(cases[i].dump()); 
+        REQUIRE(testbed.run());
     }
 }
 
-TEST_CASE("c9 - LDA - Immediate Mode")
+TEST_CASE("6502 Harte Functional Tests - ORA 09 IMMEDIATE")
 {
-    testCase("c9.json");
-}
+    auto cases = getTestCases(TEST_JSON_PATH + std::string{"09.json"});
 
-/*
-TEST_CASE("09 - ORA - Immediate Mode")
-{
-    testCase("09.json");
+    for (int i = 0; i < cases.size() && i < MAX_TESTS; ++i)
+    {
+        auto testbed = HarteTest(cases[i].dump()); 
+        REQUIRE(testbed.run());
+    }
 }
-
-TEST_CASE("05 - ORA - ZPG")
-{
-    testCase("05.json");
-}
-
-TEST_CASE("")*/
