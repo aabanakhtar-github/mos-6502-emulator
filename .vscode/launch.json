@@ -1,12 +1,34 @@
 {
-  "name": "Debug CTest",
-  "type": "cppdbg",
-  "request": "launch",
-  "program": "${cmake.testProgram}",
-  "args": ["${cmake.testArgs}"],
-  "cwd": "${workspaceFolder}",
+  "version": "0.2.0",
   "configurations": [
-  
-  ],
-  // other configurations...
+    {
+      "name": "Launch Tests",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/tests",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": true,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb", 
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "logging": {
+        "trace": true,
+        "traceResponse": true,
+        "engineLogging": false
+      },
+      "visualizerFile": "${workspaceFolder}/my.natvis",
+      "sourceFileMap": {
+     "/src": "${workspaceFolder}/src"      
+  }
+    }
+  ]
 }

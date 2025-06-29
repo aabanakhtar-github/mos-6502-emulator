@@ -47,8 +47,6 @@ HarteTest::HarteTest(const std::string& file)
 bool HarteTest::run() 
 {
     static int id = 0;
-    std::cout << "Running case... #" << id++ << std::endl;
-
     Emulator testbed;
     testbed.testing = true;
     testbed.cpu = initial_state.cpu;

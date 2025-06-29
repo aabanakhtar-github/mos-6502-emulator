@@ -131,21 +131,21 @@ Byte *Emulator::zeroPageX()
 {
   Byte page_offset = mem.readByte(++cpu.program_counter);
   Byte offset = cpu.X;
-  return mem.memory + ((page_offset + offset) & 0xFF);
+  return mem.memory + Word((page_offset + offset) & 0xFF);
 }
 
 Byte *Emulator::zeroPageY()
 {
   Byte page_offset = mem.readByte(++cpu.program_counter);
   Byte offset = cpu.Y;
-  return mem.memory + ((page_offset + offset) & 0xFF); // simulate zpg round behavior
+  return mem.memory + Word((page_offset + offset) & 0xFF); // simulate zpg round behavior
 }
 
 Byte *Emulator::relative()
 {
   // make sure to range limit the offset
   SignedByte offset = (SignedByte)mem.readByte(++cpu.program_counter);
-  return mem.memory + (cpu.program_counter + offset);
+  return mem.memory + Word(cpu.program_counter + offset);
 }
 
 /* spit out an address */
@@ -154,7 +154,7 @@ Byte *Emulator::absolute()
   Byte low = mem.readByte(++cpu.program_counter);
   Byte high = mem.readByte(++cpu.program_counter);
   Word addr = ((Word)low | ((Word)high << 8));
-  return mem.memory + addr;
+  return mem.memory + Word(addr);
 }
 
 Byte *Emulator::absoluteX()
@@ -170,7 +170,7 @@ Byte *Emulator::absoluteX()
     delayMicros(CLOCK_uS);
   }
 
-  return mem.memory + addr + offset;
+  return mem.memory + Word(addr + offset);
 }
 
 Byte *Emulator::absoluteY()
@@ -186,7 +186,7 @@ Byte *Emulator::absoluteY()
     delayMicros(CLOCK_uS);
   }
 
-  return mem.memory + addr + offset;
+  return mem.memory + Word(addr + offset);
 }
 
 /* pointer to pointer */
@@ -237,11 +237,11 @@ Byte *Emulator::indirectIndexed()
   // incur page crossing penalty
   if ((target_address & 0xFF00) != ((target_address + offset) & 0xFF00))
   {
-    delayMicros(CLOCK_uS);
+    if (!testing) delayMicros(CLOCK_uS);
   }
 
   // add offset to it
-  return mem.memory + target_address + offset;
+  return mem.memory + Word(target_address + offset); // simulate wrap around
 }
 
 /* do nothing */
@@ -341,7 +341,8 @@ void Emulator::TAX(int opcode)
 
 void Emulator::LDA(int opcode)
 {
-  Byte *addr = handleAddressing(opcode);
+  Byte* addr = handleAddressing(opcode);
+  std::cout << (size_t)addr - (size_t)mem.memory << std::endl; 
   cpu.accumulator = *addr;
   handleArithmeticFlagChanges(cpu.accumulator);
 }
