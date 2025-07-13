@@ -124,7 +124,7 @@ Byte *Emulator::immediate()
 Byte *Emulator::zeroPage()
 {
   Byte offset = mem.readByte(++cpu.program_counter);
-  return mem.memory + offset;
+  return mem.memory + Word(offset);
 }
 
 Byte *Emulator::zeroPageX()
@@ -292,7 +292,7 @@ void Emulator::BRK(int opcode)
 {
   // simulate pad byte
   cpu.program_counter++; 
-  mem.stackPushWord(cpu.S, cpu.program_counter);          // Push PC
+  mem.stackPushWord(cpu.S, cpu.program_counter + 1);          // Push PC + 1
   mem.stackPushByte(cpu.S, cpu.P | MOS_6502::P_BREAK | MOS_6502::P_UNUSED); // Push status
 
   // disable interrupts (we are one)
@@ -300,7 +300,7 @@ void Emulator::BRK(int opcode)
 
   Byte low = mem.readByte(0xFFFE);
   Byte high = mem.readByte(0xFFFF);
-  cpu.program_counter = ((Word)high << 8) | low;
+  cpu.program_counter = (((Word)high << 8) | (Word)low) - 1;
 }
 
 void Emulator::TXA(int opcode)

@@ -67,12 +67,7 @@ bool HarteTest::run()
     
     for (auto& [addr, val] : final_mem_state.mem_states) 
     {
-        if (testbed.mem.memory[addr] != val) 
-        {
-            INFO("Fail! ");
-            FAIL("MEM STATE DOESN'T MATCH");
-            return false;
-        }
+        REQUIRE((int)testbed.mem.memory[addr] == (int)val);
     }
 
     return true;

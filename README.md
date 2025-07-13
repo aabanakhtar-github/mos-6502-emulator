@@ -1,13 +1,49 @@
-# mos-6502-emulator
-A full emulator for the 6502, with simulated hardware bugs included, in readable c++20. I made this to learn how processors work, and to gather some asm knowledge. It has been tested using a custom suite covering all instructions. It doesn't support nonstandard opcodes.
+# MOS 6502 Emulator
 
-# todo 
+A functional emulator for the MOS 6502 CPU supporting core instructions and addressing modes.
+Supported Instructions
+
+BRK
+LDA (Immediate, Zero Page, Absolute, Indexed, Indirect)
+
+LDX (Immediate, Zero Page, Absolute)
+
+LDY (Immediate, Zero Page, Absolute)
+
+STA (Zero Page, Absolute, Indexed, Indirect)
+
+ORA (Immediate, Zero Page, Absolute, Indexed, Indirect)
+
+CMP (Immediate, Zero Page, Absolute, Indexed, Indirect)
+
+CPX (Immediate, Zero Page, Absolute)
+
+CPY (Immediate, Zero Page, Absolute)
+
+EOR (Immediate, Zero Page, Absolute, Indexed, Indirect)
+
+
+
+# Features
+
+Accurate CPU registers and flags
+
+Memory read/write with 16-bit addressing
+
+Stack and interrupt (BRK) support
+
+Unit tested with JSON-defined test cases
+
+# Todo
+
 b-flag and interrupts
-bti and inc 
+bti and inc
 proper pc loading
 
 # building
-coming soon. 
+
+coming soon.
 
 # examples
-coming soon. 
+
+coming soon.
