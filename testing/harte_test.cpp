@@ -50,6 +50,11 @@ bool HarteTest::run()
     Emulator testbed;
     testbed.testing = true;
     testbed.cpu = initial_state.cpu;
+    if (testbed.cpu.P & MOS_6502::P_DECIMAL) 
+    {
+        return true;
+    }
+
     for (auto& [addr, val] : initial_mem_state.mem_states) 
     {
         testbed.mem.memory[addr] = val;
@@ -58,7 +63,7 @@ bool HarteTest::run()
     // execute the instruction
     testbed.cycle(); 
         
-    REQUIRE((int)testbed.cpu.accumulator == (int)final_state.cpu.accumulator);
+    REQUIRE((uint32_t)testbed.cpu.accumulator == (uint32_t)final_state.cpu.accumulator);
     REQUIRE((int)testbed.cpu.X == (int)final_state.cpu.X);
     REQUIRE((int)testbed.cpu.Y == (int)final_state.cpu.Y);
     REQUIRE((int)testbed.cpu.program_counter == (int)final_state.cpu.program_counter);

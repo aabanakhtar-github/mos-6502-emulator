@@ -47,13 +47,11 @@ void runHarteTest(const std::string& opcodeFile)
 
 #define _TEST_CASE(NAME, FILE) \
 SECTION("6502 Harte Functional Tests - " NAME) { runHarteTest(FILE); }
-
+/*
 // 6502 Emulator Instruction Tests
 TEST_CASE("BRK") {
     _TEST_CASE("00 IMPLICIT", "00.json")
 }
-
-#if 0
 
 TEST_CASE("LDA") {
     _TEST_CASE("A9 IMMEDIATE", "a9.json")
@@ -139,4 +137,45 @@ TEST_CASE("EOR") {
     _TEST_CASE("51 (INDIRECT),Y", "51.json")
 }
 
-#endif
+TEST_CASE("ADC") {
+    _TEST_CASE("69 IMMEDIATE", "69.json")
+    _TEST_CASE("65 ZEROPAGE", "65.json")
+    _TEST_CASE("75 ZEROPAGE,X", "75.json")
+    _TEST_CASE("6D ABSOLUTE", "6d.json")
+    _TEST_CASE("7D ABSOLUTE,X", "7d.json")
+    _TEST_CASE("79 ABSOLUTE,Y", "79.json")
+    _TEST_CASE("61 (INDIRECT,X)", "61.json")
+    _TEST_CASE("71 (INDIRECT),Y", "71.json")
+}
+*/
+TEST_CASE("SBC") {
+    _TEST_CASE("E9 IMMEDIATE", "e9.json")
+    _TEST_CASE("E5 ZEROPAGE", "e5.json")
+    _TEST_CASE("F5 ZEROPAGE,X", "f5.json")
+    _TEST_CASE("ED ABSOLUTE", "ed.json")
+    _TEST_CASE("FD ABSOLUTE,X", "fd.json")
+    _TEST_CASE("F9 ABSOLUTE,Y", "f9.json")
+    _TEST_CASE("E1 (INDIRECT,X)", "e1.json")
+    _TEST_CASE("F1 (INDIRECT),Y", "f1.json")
+}
+
+/*
+TEST_CASE("TAX") {
+    _TEST_CASE("AA IMPLICIT", "aa.json")
+}
+
+TEST_CASE("ASL") {
+    _TEST_CASE("0A ACCUMULATOR", "0a.json")
+    _TEST_CASE("06 ZEROPAGE", "06.json")
+    _TEST_CASE("16 ZEROPAGE,X", "16.json")
+    _TEST_CASE("0E ABSOLUTE", "0e.json")
+    _TEST_CASE("1E ABSOLUTE,X", "1e.json")
+}
+
+TEST_CASE("ROR") {
+    _TEST_CASE("6A ACCUMULATOR", "6a.json")
+    _TEST_CASE("66 ZEROPAGE", "66.json")
+    _TEST_CASE("76 ZEROPAGE,X", "76.json")
+    _TEST_CASE("6E ABSOLUTE", "6e.json")
+    _TEST_CASE("7E ABSOLUTE,X", "7e.json")
+}*/

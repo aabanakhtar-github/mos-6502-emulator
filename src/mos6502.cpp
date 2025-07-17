@@ -64,7 +64,7 @@ void Emulator::handleArithmeticFlagChanges(Byte value)
   if (value == 0)
   {
     cpu.P |= MOS_6502::P_ZERO;
-  }
+  } 
 
   if (IS_BIT_ON(value, 7))
   {
@@ -518,7 +518,60 @@ void Emulator::initInstructionMap()
   instruction_map[0x99] = {"STA", 0x99, 3, 5, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::STA)};
   instruction_map[0x81] = {"STA", 0x81, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::STA)}; // (Indirect,X)
   instruction_map[0x91] = {"STA", 0x91, 2, 6, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::STA)}; // (Indirect),Y
+  // ADC - Add with Carry
+  instruction_map[0x69] = {"ADC", 0x69, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x65] = {"ADC", 0x65, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x75] = {"ADC", 0x75, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x6D] = {"ADC", 0x6D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x7D] = {"ADC", 0x7D, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x79] = {"ADC", 0x79, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x61] = {"ADC", 0x61, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::ADC)};
+  instruction_map[0x71] = {"ADC", 0x71, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::ADC)};
 
+  // SBC - Subtract with Carry
+  instruction_map[0xE9] = {"SBC", 0xE9, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xE5] = {"SBC", 0xE5, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xF5] = {"SBC", 0xF5, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xED] = {"SBC", 0xED, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xFD] = {"SBC", 0xFD, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xF9] = {"SBC", 0xF9, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xE1] = {"SBC", 0xE1, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xF1] = {"SBC", 0xF1, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::SBC)};
+  instruction_map[0xAA] = {"TAX", 0xAA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TAX)};
+  instruction_map[0x8A] = {"TXA", 0x8A, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TXA)};
+  instruction_map[0xA8] = {"TAY", 0xA8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TAY)};
+  instruction_map[0x98] = {"TYA", 0x98, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TYA)};
+  instruction_map[0x0A] = {"ASL", 0x0A, 1, 2, AddressMode::ACCUMULATOR, MAKE_BINDING(&Emulator::ASL)};
+  instruction_map[0x06] = {"ASL", 0x06, 2, 5, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::ASL)};
+  instruction_map[0x16] = {"ASL", 0x16, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ASL)};
+  instruction_map[0x0E] = {"ASL", 0x0E, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ASL)};
+  instruction_map[0x1E] = {"ASL", 0x1E, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ASL)};
+  instruction_map[0x2A] = {"ROL", 0x2A, 1, 2, AddressMode::ACCUMULATOR, MAKE_BINDING(&Emulator::ROL)};
+  instruction_map[0x26] = {"ROL", 0x26, 2, 5, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::ROL)};
+  instruction_map[0x36] = {"ROL", 0x36, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ROL)};
+  instruction_map[0x2E] = {"ROL", 0x2E, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ROL)};
+  instruction_map[0x3E] = {"ROL", 0x3E, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ROL)};
+  instruction_map[0x6A] = {"ROR", 0x6A, 1, 2, AddressMode::ACCUMULATOR, MAKE_BINDING(&Emulator::ROR)};
+  instruction_map[0x66] = {"ROR", 0x66, 2, 5, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::ROR)};
+  instruction_map[0x76] = {"ROR", 0x76, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ROR)};
+  instruction_map[0x6E] = {"ROR", 0x6E, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ROR)};
+  instruction_map[0x7E] = {"ROR", 0x7E, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ROR)};
+  #if 0 
+  void CLC(int opcode);
+  void CLD(int opcode);
+  void CLI(int opcode);
+  void CLV(int opcode);
+  void SEC(int opcode);
+  void SED(int opcode);
+  void SEI(int opcode);
+  #endif
+  instruction_map[0x18] = {"CLC", 0x18, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLC)};
+  instruction_map[0xD8] = {"CLD", 0xD8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLD)}; 
+  instruction_map[0x58] = {"CLI", 0x58, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLI)}; 
+  instruction_map[0xB8] = {"CLV", 0xB8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLV)};; 
+  instruction_map[0x38] = {"SEC", 0x38, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEC)}; 
+  instruction_map[0xF8] = {"SED", 0xF8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SED)};
+  
     // Custom end-of-program instruction
   instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
 }
@@ -605,21 +658,16 @@ void Emulator::ADC(int opcode)
 
 void Emulator::SBC(int opcode)
 {
-  Byte *addr = handleAddressing(opcode);
-  Byte operand = *addr;
+  Byte* addr = handleAddressing(opcode);
+  Word carry = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
+  Word result = (Word)cpu.accumulator - *addr - (1 - carry);
+  Byte result8 = result & 0xFF;
 
-  Byte carry = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
-  Byte acc_before = cpu.accumulator;
+  int is_overflow = ((cpu.accumulator ^ *addr) & (cpu.accumulator ^ (Byte)result)) & 0x80;
 
-  // Invert operand to simulate two's complement subtraction
-  // this is some weird bit magic thing that does subtraction
-  Word sum = (Word)acc_before + (Word)(~operand) + (Word)carry;
-  Byte result = (Byte)sum;
+  cpu.accumulator = result8;
 
-  cpu.accumulator = result;
-
-  // Carry flag = no borrow
-  if (sum < 0x100)
+  if (result < 0x100)
   {
     cpu.P |= MOS_6502::P_CARRY;
   }
@@ -628,8 +676,6 @@ void Emulator::SBC(int opcode)
     cpu.P &= ~MOS_6502::P_CARRY;
   }
 
-  // Overflow: check signed overflow
-  bool is_overflow = ((acc_before ^ result) & (~operand ^ result)) & 0x80;
   if (is_overflow)
   {
     cpu.P |= MOS_6502::P_OVERFLOW;
@@ -639,8 +685,9 @@ void Emulator::SBC(int opcode)
     cpu.P &= ~MOS_6502::P_OVERFLOW;
   }
 
-  handleArithmeticFlagChanges(result);
+  handleArithmeticFlagChanges(result8);
 }
+
 
 void Emulator::ASL(int opcode)
 {
@@ -752,20 +799,32 @@ void Emulator::CPX(int opcode)
   Byte result = X - M;
 
   if (X == M)
+  {
     cpu.P |= MOS_6502::P_ZERO;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_ZERO;
+  }
 
   if (X >= M)
+  {
     cpu.P |= MOS_6502::P_CARRY;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_CARRY;
+  }
 
   // Set Negative flag if bit 7 of (A - M) is set
   if (result & 0x80)
+  {
     cpu.P |= MOS_6502::P_NEGATIVE;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_NEGATIVE;
+  }
 }
 
 void Emulator::CPY(int opcode)

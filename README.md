@@ -32,7 +32,7 @@ Memory read/write with 16-bit addressing
 
 Stack and interrupt (BRK) support
 
-Unit tested with JSON-defined test cases
+Functionality tested with Tom Harte's JSON-defined test cases
 
 # Todo
 

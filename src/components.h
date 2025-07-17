@@ -36,13 +36,13 @@ struct MOS_6502
 
     /* Bit fields for the P register */
     constexpr static Byte P_NEGATIVE    =  0b10000000;
-    constexpr static Byte P_OVERFLOW     = 0b01000000;
+    constexpr static Byte P_OVERFLOW     = 0b01000000;  // set if the sign changes for a arithmetic operation but is invalid
     constexpr static Byte P_UNUSED       = 0b00100000;  // not typically used
     constexpr static Byte P_BREAK        = 0b00010000;
     constexpr static Byte P_DECIMAL      = 0b00001000;
     constexpr static Byte P_INT_DISABLE  = 0b00000100;
     constexpr static Byte P_ZERO         = 0b00000010;
-    constexpr static Byte P_CARRY        = 0b00000001;
+    constexpr static Byte P_CARRY        = 0b00000001; // represents an extra bit. Usually set when subtraction borrows (i.e from a 16 bit number) or when addition overflows
 
 };
 
