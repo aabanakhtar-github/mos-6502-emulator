@@ -47,7 +47,7 @@ void runHarteTest(const std::string& opcodeFile)
 
 #define _TEST_CASE(NAME, FILE) \
 SECTION("6502 Harte Functional Tests - " NAME) { runHarteTest(FILE); }
-/*
+
 // 6502 Emulator Instruction Tests
 TEST_CASE("BRK") {
     _TEST_CASE("00 IMPLICIT", "00.json")
@@ -147,7 +147,7 @@ TEST_CASE("ADC") {
     _TEST_CASE("61 (INDIRECT,X)", "61.json")
     _TEST_CASE("71 (INDIRECT),Y", "71.json")
 }
-*/
+
 TEST_CASE("SBC") {
     _TEST_CASE("E9 IMMEDIATE", "e9.json")
     _TEST_CASE("E5 ZEROPAGE", "e5.json")
@@ -159,7 +159,6 @@ TEST_CASE("SBC") {
     _TEST_CASE("F1 (INDIRECT),Y", "f1.json")
 }
 
-/*
 TEST_CASE("TAX") {
     _TEST_CASE("AA IMPLICIT", "aa.json")
 }
@@ -178,4 +177,4 @@ TEST_CASE("ROR") {
     _TEST_CASE("76 ZEROPAGE,X", "76.json")
     _TEST_CASE("6E ABSOLUTE", "6e.json")
     _TEST_CASE("7E ABSOLUTE,X", "7e.json")
-}*/
+}

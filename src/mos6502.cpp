@@ -624,14 +624,15 @@ void Emulator::RTI(int opcode)
 
 void Emulator::ADC(int opcode)
 {
-  Byte *addr = handleAddressing(opcode);
-  Byte operand = *addr;
+  Byte* addr = handleAddressing(opcode);
+  Word carry = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
+  Word result = (Word)cpu.accumulator + *addr + carry;
+  Byte result8 = result & 0xFF;
+  // what the cryptic bro :skull: 
+  int is_overflow = (~(cpu.accumulator ^ *addr) & (cpu.accumulator ^ result)) & 0x80;
+  cpu.accumulator = result8;
 
-  Byte carry = (MOS_6502::P_CARRY & cpu.P) ? 1 : 0;
-  Word sum = (Word)operand + (Word)cpu.accumulator + (Word)carry;
-
-  // set carry flag
-  if (sum > 0xFF)
+  if (result >= 0x100) // if the result is greater than 8 bits, ensue destruction upon the world
   {
     cpu.P |= MOS_6502::P_CARRY;
   }
@@ -640,8 +641,6 @@ void Emulator::ADC(int opcode)
     cpu.P &= ~MOS_6502::P_CARRY;
   }
 
-  // set the overflow flag (if its humongous)
-  int is_overflow = (~(cpu.accumulator ^ operand) & (cpu.accumulator ^ (Byte)sum)) & 0x80;
   if (is_overflow)
   {
     cpu.P |= MOS_6502::P_OVERFLOW;
@@ -651,10 +650,10 @@ void Emulator::ADC(int opcode)
     cpu.P &= ~MOS_6502::P_OVERFLOW;
   }
 
-  cpu.accumulator = sum;
-  // set other flags
-  handleArithmeticFlagChanges(cpu.accumulator);
+  handleArithmeticFlagChanges(result8);
 }
+
+
 
 void Emulator::SBC(int opcode)
 {
