@@ -105,6 +105,7 @@ private:
   void DEX(int opcode);
   void DEY(int opcode);
   void INC(int opcode);
+  void DEC(int opcode);
 
   /* Break (interrupt) */
   void BRK(int opcode);
@@ -145,7 +146,7 @@ private:
   void CPY(int opcode);
 
   /* Branching */
-  void branchIf(bool condition, SignedByte offset);
+  void branchIf(bool condition, Byte* to);
   void BCC(int opcode);
   void BCS(int opcode);
   void BEQ(int opcode);

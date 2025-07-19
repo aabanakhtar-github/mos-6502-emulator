@@ -50,7 +50,7 @@ bool HarteTest::run()
     Emulator testbed;
     testbed.testing = true;
     testbed.cpu = initial_state.cpu;
-    if (testbed.cpu.P & MOS_6502::P_DECIMAL) // not emulating this weird ahh stuff bro
+    if (testbed.cpu.P & MOS_6502::P_DECIMAL) // not emulating this weird ahh stuff bro (it's so bad they removed it on newer ones)
     {
         return true;
     }

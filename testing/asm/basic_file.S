@@ -1,0 +1,4 @@
+LDA $00 
+ADC $10 
+STA $00 
+HLT

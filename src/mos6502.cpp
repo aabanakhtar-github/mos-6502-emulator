@@ -284,7 +284,14 @@ void Emulator::DEY(int opcode)
 void Emulator::INC(int opcode)
 {
   Byte* location = handleAddressing(opcode);
-  *location += 1;
+  (*location)++;
+  handleArithmeticFlagChanges(*location);
+}
+
+void Emulator::DEC(int opcode)
+{
+  Byte* location = handleAddressing(opcode); 
+  (*location)--; 
   handleArithmeticFlagChanges(*location);
 }
 
@@ -556,22 +563,69 @@ void Emulator::initInstructionMap()
   instruction_map[0x76] = {"ROR", 0x76, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::ROR)};
   instruction_map[0x6E] = {"ROR", 0x6E, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ROR)};
   instruction_map[0x7E] = {"ROR", 0x7E, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ROR)};
-  #if 0 
-  void CLC(int opcode);
-  void CLD(int opcode);
-  void CLI(int opcode);
-  void CLV(int opcode);
-  void SEC(int opcode);
-  void SED(int opcode);
-  void SEI(int opcode);
-  #endif
   instruction_map[0x18] = {"CLC", 0x18, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLC)};
   instruction_map[0xD8] = {"CLD", 0xD8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLD)}; 
   instruction_map[0x58] = {"CLI", 0x58, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLI)}; 
   instruction_map[0xB8] = {"CLV", 0xB8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLV)};; 
   instruction_map[0x38] = {"SEC", 0x38, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEC)}; 
   instruction_map[0xF8] = {"SED", 0xF8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SED)};
-  
+  instruction_map[0x29] = {"AND", 0x29, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x25] = {"AND", 0x25, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x35] = {"AND", 0x35, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x2D] = {"AND", 0x2D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x3D] = {"AND", 0x3D, 3, 4, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x39] = {"AND", 0x39, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x21] = {"AND", 0x21, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::AND)};
+  instruction_map[0x31] = {"AND", 0x31, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::AND)};
+
+  // BIT
+  instruction_map[0x24] = {"BIT", 0x24, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::BIT)};
+  instruction_map[0x2C] = {"BIT", 0x2C, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::BIT)};
+
+  // Branches
+  instruction_map[0x90] = {"BCC", 0x90, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BCC)};
+  instruction_map[0xB0] = {"BCS", 0xB0, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BCS)};
+  instruction_map[0xF0] = {"BEQ", 0xF0, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BEQ)};
+  instruction_map[0x30] = {"BMI", 0x30, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BMI)};
+  instruction_map[0xD0] = {"BNE", 0xD0, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BNE)};
+  instruction_map[0x10] = {"BPL", 0x10, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BPL)};
+  instruction_map[0x50] = {"BVC", 0x50, 2, 2, AddressMode::RELATIVE, MAKE_BINDING(&Emulator::BVC)};
+
+  // DEC
+  instruction_map[0xC6] = {"DEC", 0xC6, 2, 5, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::DEC)};
+  instruction_map[0xD6] = {"DEC", 0xD6, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::DEC)};
+  instruction_map[0xCE] = {"DEC", 0xCE, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::DEC)};
+  instruction_map[0xDE] = {"DEC", 0xDE, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::DEC)};
+
+  // INC
+  instruction_map[0xE6] = {"INC", 0xE6, 2, 5, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::INC)};
+  instruction_map[0xF6] = {"INC", 0xF6, 2, 6, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::INC)};
+  instruction_map[0xEE] = {"INC", 0xEE, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::INC)};
+  instruction_map[0xFE] = {"INC", 0xFE, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::INC)};
+
+  // RTI & RTS
+  instruction_map[0x40] = {"RTI", 0x40, 1, 6, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::RTI)};
+  instruction_map[0x60] = {"RTS", 0x60, 1, 6, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::RTS)};
+
+  // STX
+  instruction_map[0x86] = {"STX", 0x86, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::STX)};
+  instruction_map[0x96] = {"STX", 0x96, 2, 4, AddressMode::ZERO_PAGE_AND_Y, MAKE_BINDING(&Emulator::STX)};
+  instruction_map[0x8E] = {"STX", 0x8E, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::STX)};
+
+  // STY
+  instruction_map[0x84] = {"STY", 0x84, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::STY)};
+  instruction_map[0x94] = {"STY", 0x94, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::STY)};
+  instruction_map[0x8C] = {"STY", 0x8C, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::STY)};
+
+  // TSX / TXS
+  instruction_map[0xBA] = {"TSX", 0xBA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TSX)};
+  instruction_map[0x9A] = {"TXS", 0x9A, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TXS)};  
+  instruction_map[0x48] = {"PHA", 0x48, 1, 3, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PHA)};
+  instruction_map[0x08] = {"PHP", 0x08, 1, 3, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PHP)};
+  instruction_map[0x68] = {"PLA", 0x68, 1, 4, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PLA)};
+  instruction_map[0x28] = {"PLP", 0x28, 1, 4, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PLP)};
+  instruction_map[0x78] = {"SEI", 0x78, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEI)};
+
     // Custom end-of-program instruction
   instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
 }
@@ -772,20 +826,32 @@ void Emulator::CMP(int opcode)
   Byte result = A - M;
 
   if (A == M)
+  {
     cpu.P |= MOS_6502::P_ZERO;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_ZERO;
+  }
 
   if (A >= M)
+  {
     cpu.P |= MOS_6502::P_CARRY;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_CARRY;
+  }
 
   // Set Negative flag if bit 7 of (A - M) is set
   if (result & 0x80)
+  {
     cpu.P |= MOS_6502::P_NEGATIVE;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_NEGATIVE;
+  }
 }
 
 void Emulator::CPX(int opcode)
@@ -835,75 +901,88 @@ void Emulator::CPY(int opcode)
   Byte result = Y - M;
 
   if (Y == M)
+  {
     cpu.P |= MOS_6502::P_ZERO;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_ZERO;
+  }
 
   if (Y >= M)
+  {
     cpu.P |= MOS_6502::P_CARRY;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_CARRY;
+  }
 
   // Set Negative flag if bit 7 of (A - M) is set
   if (result & 0x80)
+  {
     cpu.P |= MOS_6502::P_NEGATIVE;
+  }
   else
+  {
     cpu.P &= ~MOS_6502::P_NEGATIVE;
+  }
 }
 
-void Emulator::branchIf(bool condition, SignedByte offset)
+void Emulator::branchIf(bool condition, Byte* to)
 {
   if (condition) 
   {
-    cpu.program_counter += offset;
+    size_t location = to - mem.memory;
+    cpu.program_counter = (Word)location; 
   }
 }
 
 void Emulator::BCC(int opcode)
 {
-  SignedByte offset = *handleAddressing(opcode);
+  Byte* offset = handleAddressing(opcode);
   branchIf((cpu.P & MOS_6502::P_CARRY) == 0, offset); 
 }
 
 void Emulator::BCS(int opcode) 
 {
-  SignedByte offset = *handleAddressing(opcode); 
+  Byte* offset = handleAddressing(opcode); 
   branchIf(cpu.P & MOS_6502::P_CARRY, offset);
 }
 
 void Emulator::BEQ(int opcode) 
 {
-  SignedByte offset = *handleAddressing(opcode); 
+  Byte* offset = handleAddressing(opcode); 
   branchIf(cpu.P & MOS_6502::P_ZERO, offset);
 }
 
 void Emulator::BMI(int opcode)
 {
-  SignedByte offset = *handleAddressing(opcode); 
+  Byte* offset = handleAddressing(opcode); 
   branchIf(cpu.P & MOS_6502::P_NEGATIVE, offset);
 }
 
 void Emulator::BNE(int opcode)
 {
-  SignedByte offset = *handleAddressing(opcode); 
+  Byte* offset = handleAddressing(opcode); 
   branchIf((cpu.P & MOS_6502::P_ZERO) == 0, offset);
 }
 
 void Emulator::BPL(int opcode)
 {
-  SignedByte offset = *handleAddressing(opcode); 
+  Byte* offset = handleAddressing(opcode); 
   branchIf((cpu.P & MOS_6502::P_NEGATIVE) == 0, offset);
 }
 
 void Emulator::BVC(int opcode)
 {
-  SignedByte offset = *handleAddressing(opcode);
+  Byte* offset = handleAddressing(opcode);
   branchIf((cpu.P & MOS_6502::P_OVERFLOW) == 0, offset);
 }
 
 void Emulator::BVS(int opcode)
 {
-  SignedByte offset = *handleAddressing(opcode);
+  Byte* offset = handleAddressing(opcode);
   branchIf(cpu.P & MOS_6502::P_OVERFLOW, offset);
 }
 
