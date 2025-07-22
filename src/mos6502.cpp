@@ -51,6 +51,7 @@ bool Emulator::cycle()
 
     instruction.implementation(opcode);
     // simulate the delay
+    DELAY_CYCLES(instruction_map, opcode);
     cpu.program_counter++;
 
     return true;
@@ -397,7 +398,7 @@ void Emulator::JSR(int opcode)
 {
   Byte *location = handleAddressing(opcode);
   mem.stackPushWord(cpu.S, cpu.program_counter - 2); // push the return address TODO: add -1 if this doesn't work
-  cpu.program_counter = Word(location - mem.memory);
+  cpu.program_counter = Word(location - mem.memory - 1); // -1 for off by one  i guess
 }
 
 void Emulator::RTS(int opcode)
@@ -446,7 +447,7 @@ void Emulator::initInstructionMap()
 {
   for (auto &i : instruction_map)
   {
-    i = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, nullptr}; // nullptr for implementation as it's a custom termination
+    i = {"DONE", 0x02, 1, 1, AddressMode::IMPLICIT, nullptr}; // nullptr for implementation as it's a custom termination
   }
 
   auto MAKE_BINDING = [&](void (Emulator::*member_func_ptr)(int))
@@ -627,7 +628,7 @@ void Emulator::initInstructionMap()
   instruction_map[0x78] = {"SEI", 0x78, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEI)};
 
     // Custom end-of-program instruction
-  instruction_map[0xFE] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
+  instruction_map[0x02] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
 }
 
 void Emulator::CLC(int opcode)
