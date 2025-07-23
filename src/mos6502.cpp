@@ -152,8 +152,8 @@ Byte *Emulator::relative()
 /* spit out an address */
 Byte *Emulator::absolute()
 {
-  Byte low = mem.readByte(++cpu.program_counter);
-  Byte high = mem.readByte(++cpu.program_counter);
+  Byte low = mem.readByte(Word(++cpu.program_counter));
+  Byte high = mem.readByte(Word(++cpu.program_counter));
   Word addr = ((Word)low | ((Word)high << 8));
   return mem.memory + Word(addr);
 }
@@ -332,7 +332,7 @@ void Emulator::TSX(int opcode)
 void Emulator::TXS(int opcode)
 {
   cpu.S = cpu.X;
-  handleArithmeticFlagChanges(cpu.S);
+  // handleArithmeticFlagChanges(cpu.S); bro what?? 
 }
 
 void Emulator::TYA(int opcode)
@@ -397,7 +397,7 @@ void Emulator::JMP(int opcode)
 void Emulator::JSR(int opcode)
 {
   Byte *location = handleAddressing(opcode);
-  mem.stackPushWord(cpu.S, cpu.program_counter - 2); // push the return address TODO: add -1 if this doesn't work
+  mem.stackPushWord(cpu.S, cpu.program_counter); // push the return address (pc has already been incremented by addr func)
   cpu.program_counter = Word(location - mem.memory - 1); // -1 for off by one  i guess
 }
 
@@ -421,12 +421,14 @@ void Emulator::PLA(int opcode)
 
 void Emulator::PHP(int opcode)
 {
-  mem.stackPushByte(cpu.S, cpu.P);
+  mem.stackPushByte(cpu.S, cpu.P | MOS_6502::P_BREAK | MOS_6502::P_UNUSED); // must always be set
 }
 
 void Emulator::PLP(int opcode)
 {
   cpu.P = mem.stackPullByte(cpu.S);
+  cpu.P &= ~MOS_6502::P_BREAK;  // Clear B (this is some internal detail i suppose)
+  cpu.P |= MOS_6502::P_UNUSED; // set the unused bit just in case 
 }
 
 void Emulator::AND(int opcode)

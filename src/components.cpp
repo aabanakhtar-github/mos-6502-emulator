@@ -8,15 +8,14 @@ void Memory::stackPushByte(Byte& stack_register, Byte value)
     stack_register--; 
 }
 
-// grows downward???
+// grows downward
 Byte Memory::stackPullByte(Byte& stack_register) 
 {
-    Byte value = memory[STACK_BASE + stack_register]; 
     ++stack_register;
+    Byte value = memory[STACK_BASE + stack_register]; 
     did_write = false;
     return value;
 }
-
 
 void Memory::stackPushWord(Byte& stack_register, Word value) 
 {
