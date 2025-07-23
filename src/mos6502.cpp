@@ -23,8 +23,7 @@ void Emulator::loadROM(const std::vector<Byte> &program)
 
   std::memcpy(mem.memory + Memory::ROM_START, program.data(), program.size());
   std::cout << "Loaded ROM successfully." << std::endl;
-
-  reloadPC();
+  if (reset_vector_mode) reloadPC();
 }
 
 void Emulator::run()

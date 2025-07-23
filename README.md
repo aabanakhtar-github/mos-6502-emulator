@@ -1,49 +1,37 @@
 # MOS 6502 Emulator
 
-A functional emulator for the MOS 6502 CPU supporting core instructions and addressing modes.
-Supported Instructions
+An educational C++ emulator for the classic [MOS Technology 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) 8-bit processor, built from the ground up to closely mirror real hardware behavior.
 
-BRK
-LDA (Immediate, Zero Page, Absolute, Indexed, Indirect)
+## Features
 
-LDX (Immediate, Zero Page, Absolute)
+* Full 6502 CPU functionality support (minus decimal mode)
+* Accurately implemented register level functionality
+* Support for all 151 official instructions
+* Unit Tested using the Tom Harte ProcessorTests and Catch2
+  * NOTE: There is one test case in the ProcessorTests repo that is invalid.
+* Written in readable c++
 
-LDY (Immediate, Zero Page, Absolute)
+## Implementation Overview
 
-STA (Zero Page, Absolute, Indexed, Indirect)
+| Component   | Size           | Description                                   |
+| ----------- | -------------- | --------------------------------------------- |
+| `A`         | 8-bit          | Accumulator (arithmetic, logic, loads/stores) |
+| `X`, `Y`    | 8-bit          | Index registers (looping, memory access)      |
+| `S`         | 8-bit          | Stack Pointer (offset from 0x0100–0x01FF)    |
+| `PC`        | 16-bit         | Program Counter (tracks instruction location) |
+| `P`         | 8-bit          | Processor Status Flags                        |
+| Memory      | 64 KB          | Unified address space (RAM + ROM)             |
+| Stack Range | 0x0100–0x01FF | Fixed 256-byte hardware stack                 
 
-ORA (Immediate, Zero Page, Absolute, Indexed, Indirect)
+## Building & Running
 
-CMP (Immediate, Zero Page, Absolute, Indexed, Indirect)
+Coming soon..
 
-CPX (Immediate, Zero Page, Absolute)
+## Tests
 
-CPY (Immediate, Zero Page, Absolute)
+Coming soon.
 
-EOR (Immediate, Zero Page, Absolute, Indexed, Indirect)
+## TODO
 
+Coming soon.
 
-
-# Features
-
-Accurate CPU registers and flags
-
-Memory read/write with 16-bit addressing
-
-Stack and interrupt (BRK) support
-
-Functionality tested with Tom Harte's JSON-defined test cases
-
-# Todo
-
-b-flag and interrupts
-bti and inc
-proper pc loading
-
-# building
-
-coming soon.
-
-# examples
-
-coming soon.
