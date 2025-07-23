@@ -1,5 +1,7 @@
 #include "types.h"
 #include "cstddef"
+#include <sstream>
+#include <iomanip>
 
 struct MOS_6502 
 {
@@ -12,6 +14,19 @@ struct MOS_6502
         lhs.Y               == rhs.Y &&
         lhs.S               == rhs.S &&
         lhs.P               == rhs.P;
+    }
+
+    std::string to_string() const
+    {
+        std::ostringstream oss;
+        oss << std::hex << std::uppercase << std::setfill('0');
+        oss << "PC: $" << std::setw(4) << program_counter << "  "
+            << "A: $"  << std::setw(2) << static_cast<int>(accumulator) << "  "
+            << "X: $"  << std::setw(2) << static_cast<int>(X)           << "  "
+            << "Y: $"  << std::setw(2) << static_cast<int>(Y)           << "  "
+            << "S: $"  << std::setw(2) << static_cast<int>(S)           << "  "
+            << "P: $"  << std::setw(2) << static_cast<int>(P);
+        return oss.str();
     }
 
     bool operator!=(const MOS_6502& rhs) const 
@@ -71,13 +86,13 @@ struct Memory
     Word stackPullWord(Byte& stack_register);
 
     // useful locations - zero page is the fastest memory
-    constexpr static Word ZERO_PAGE_MAX = 0x00FF;
-    constexpr static Word STACK_BASE = 0x0100; 
-    constexpr static Word STACK_TOP = 0x01FF; // 256 byte stack
-    constexpr static Word RAM_START = 0x0200;
-    constexpr static Word RAM_END = 0x7FFF; // 32KB RAM
-    constexpr static Word ROM_START = 0x8000; 
-    constexpr static Word ROM_END = 0xFFFD; // 62.5 KB ROM
-    constexpr static Word BRK_INT = 0xFFFE; 
-    constexpr static Word BRK_INT_HI = 0xFFFF;
+    constexpr static size_t ZERO_PAGE_MAX = 0x00FF;
+    constexpr static size_t STACK_BASE = 0x0100; 
+    constexpr static size_t STACK_TOP = 0x01FF; // 256 byte stack
+    constexpr static size_t RAM_START = 0x0200;
+    constexpr static size_t RAM_END = 0x7FFF; // 32KB RAM
+    constexpr static size_t ROM_START = 0x8000; 
+    constexpr static size_t ROM_END = 0x10000; // 32KB + 1B ROM 
+    constexpr static size_t BRK_INT = 0xFFFE; 
+    constexpr static size_t BRK_INT_HI = 0xFFFF;
 };

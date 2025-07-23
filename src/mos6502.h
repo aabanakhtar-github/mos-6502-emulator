@@ -41,18 +41,22 @@ struct Instruction
 class Emulator
 {
 public:
-  bool testing = false;
+  static bool testing;
+  static bool reset_vector_mode;  
   struct MOS_6502 cpu;
   struct Memory mem;
   Instruction instruction_map[0xFF];
 
-  explicit Emulator()
+  void reloadPC()
   {
-    // reset vector for CPU
     Byte pc_lower = mem.memory[0xFFFC];
     Byte pc_higher = mem.memory[0xFFFD];
     Word pc = (Word)pc_higher << 8 | (Word)pc_lower;
     cpu.program_counter = pc;
+  }
+
+  explicit Emulator()
+  {
     initInstructionMap();
   }
 

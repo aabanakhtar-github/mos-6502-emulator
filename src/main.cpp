@@ -5,22 +5,40 @@
 int main(int argc, char* argv[]) 
 {
     Emulator emulator;
-    const std::string inputFile = "../testing/assembly/lda_test.bin";
+    Emulator::testing = false;
+
+    char reset_vector;
+    std::cout << "Use proper reset vector(Y/n) ";
+    std::cin >> reset_vector; 
+    if (reset_vector == 'n') 
+    {
+        emulator.reset_vector_mode = false;
+    } else ;
+    
+    
+    std::string inputFile;
+    std::cout << "Enter binary file: "; 
+    std::cin >> inputFile; 
+
+    /* Create the program*/
     std::ifstream infile(inputFile, std::ios_base::binary);
+    if (!infile.is_open())
+    {
+        std::cout << "Invalid file entered!" << std::endl; 
+        return 1; 
+    }
+
     std::vector<char> cbuf{std::istreambuf_iterator<char>(infile),
                             std::istreambuf_iterator<char>()};
-
     std::vector<Byte> buf(begin(cbuf), end(cbuf));
     buf.push_back(0x02); // EOP
 
-
-    for (auto byte : buf) 
-    {
-        std::cout << std::hex << byte << " ";
-    }
-
+    std::cout << "=====INITIAL=====\n";
+    std::cout << emulator.cpu.to_string() << std::endl;
     emulator.loadROM(buf);
-
     emulator.run();
+
+    std::cout << "====FINAL=====\n";
+    std::cout << emulator.cpu.to_string() << std::endl;
     return 0;    
 }

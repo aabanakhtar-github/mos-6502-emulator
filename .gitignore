@@ -12,3 +12,5 @@ build
 cc65
 _deps
 CMakeUserPresets.json
+*.o 
+*.bin

@@ -10,23 +10,28 @@
 
 using namespace std::placeholders;
 
+bool Emulator::reset_vector_mode = true;
+bool Emulator::testing = false;
+
 void Emulator::loadROM(const std::vector<Byte> &program)
 {
   // define our instructions
-  if (Memory::ROM_END - Memory::ROM_START < program.size())
+  if (Memory::ROM_END - Memory::ROM_START + 1 < program.size())
   {
     std::cerr << "Cannot install ROM, too big." << std::endl;
   }
 
   std::memcpy(mem.memory + Memory::ROM_START, program.data(), program.size());
   std::cout << "Loaded ROM successfully." << std::endl;
+
+  reloadPC();
 }
 
 void Emulator::run()
 {
   while (cpu.program_counter < Memory::ROM_END)
   {
-    if (!cycle()) 
+    if (!cycle())
     {
       break;
     }
@@ -35,26 +40,25 @@ void Emulator::run()
 
 bool Emulator::cycle()
 {
-    if (testing)
-    {
-    }
+  int opcode = mem.readByte(cpu.program_counter);
+  auto instruction = instruction_map[opcode];
 
-    int opcode = mem.readByte(cpu.program_counter);
-    auto instruction = instruction_map[opcode];
+  if (instruction.name == "DONE" || (!testing && instruction.name == "BRK"))
+  {
+    // invalid opcode, so get out of here asap
+    return false;
+  }
 
-    if (instruction.name == "DONE") 
-    {
-      // invalid opcode, so get out of here asap
-      return false;
-    }
-
-
-    instruction.implementation(opcode);
-    // simulate the delay
+  instruction.implementation(opcode);
+  cpu.program_counter++;
+  
+  // simulate the delay
+  if (!testing)
+  {
     DELAY_CYCLES(instruction_map, opcode);
-    cpu.program_counter++;
+  }
 
-    return true;
+  return true;
 }
 
 void Emulator::handleArithmeticFlagChanges(Byte value)
@@ -65,7 +69,7 @@ void Emulator::handleArithmeticFlagChanges(Byte value)
   if (value == 0)
   {
     cpu.P |= MOS_6502::P_ZERO;
-  } 
+  }
 
   if (IS_BIT_ON(value, 7))
   {
@@ -154,8 +158,10 @@ Byte *Emulator::absolute()
 {
   Byte low = mem.readByte(Word(++cpu.program_counter));
   Byte high = mem.readByte(Word(++cpu.program_counter));
+  std::cout << std::hex << (int)low << " " << std::hex << (int)high << std::endl;
+
   Word addr = ((Word)low | ((Word)high << 8));
-  return mem.memory + Word(addr);
+  return mem.memory + (addr & 0xFFFF);
 }
 
 Byte *Emulator::absoluteX()
@@ -196,17 +202,19 @@ Byte *Emulator::indirect()
   Byte lower_byte = mem.readByte(++cpu.program_counter);
   Byte higher_byte = mem.readByte(++cpu.program_counter);
   Word location = ((Word)higher_byte << 8) | (Word)lower_byte;
-
-  // just crash because this is weird
-  if (location + 1 >= Memory::ROM_END)
+  Byte pointer_low = mem.readByte(location);
+  Byte pointer_high;
+  // simulate jump bug if crossing page boundary
+  if (((location + 1) & 0xFF00) != (location & 0xFF00))
   {
-    std::exit(1);
+    pointer_high = mem.readByte(location & 0xFF00);
+  }
+  else
+  {
+    pointer_high = mem.readByte(location + 1);
   }
 
-  Byte pointer_low = mem.readByte(location);
-  Byte pointer_high = mem.readByte((location & 0xFF00) & ((location + 1) & 0x00FF)); // simulate the lovely bugs created by them 6502 developers
   Word actual_location = ((Word)pointer_high << 8) | (Word)pointer_low;
-
   return mem.memory + actual_location;
 }
 
@@ -238,7 +246,8 @@ Byte *Emulator::indirectIndexed()
   // incur page crossing penalty
   if ((target_address & 0xFF00) != ((target_address + offset) & 0xFF00))
   {
-    if (!testing) delayMicros(CLOCK_uS);
+    if (!testing)
+      delayMicros(CLOCK_uS);
   }
 
   // add offset to it
@@ -284,23 +293,23 @@ void Emulator::DEY(int opcode)
 
 void Emulator::INC(int opcode)
 {
-  Byte* location = handleAddressing(opcode);
+  Byte *location = handleAddressing(opcode);
   (*location)++;
   handleArithmeticFlagChanges(*location);
 }
 
 void Emulator::DEC(int opcode)
 {
-  Byte* location = handleAddressing(opcode); 
-  (*location)--; 
+  Byte *location = handleAddressing(opcode);
+  (*location)--;
   handleArithmeticFlagChanges(*location);
 }
 
 void Emulator::BRK(int opcode)
 {
   // simulate pad byte
-  cpu.program_counter++; 
-  mem.stackPushWord(cpu.S, cpu.program_counter + 1);          // Push PC + 1
+  cpu.program_counter++;
+  mem.stackPushWord(cpu.S, cpu.program_counter + 1);                        // Push PC + 1
   mem.stackPushByte(cpu.S, cpu.P | MOS_6502::P_BREAK | MOS_6502::P_UNUSED); // Push status
 
   // disable interrupts (we are one)
@@ -332,7 +341,7 @@ void Emulator::TSX(int opcode)
 void Emulator::TXS(int opcode)
 {
   cpu.S = cpu.X;
-  // handleArithmeticFlagChanges(cpu.S); bro what?? 
+  // handleArithmeticFlagChanges(cpu.S); bro what??
 }
 
 void Emulator::TYA(int opcode)
@@ -349,8 +358,8 @@ void Emulator::TAX(int opcode)
 
 void Emulator::LDA(int opcode)
 {
-  Byte* addr = handleAddressing(opcode);
-  std::cout << (size_t)addr - (size_t)mem.memory << std::endl; 
+  Byte *addr = handleAddressing(opcode);
+  std::cout << (size_t)addr - (size_t)mem.memory << std::endl;
   cpu.accumulator = *addr;
   handleArithmeticFlagChanges(cpu.accumulator);
 }
@@ -391,13 +400,13 @@ void Emulator::JMP(int opcode)
 {
   Byte *location = handleAddressing(opcode);
   // jump to that memory location (waoh)
-  cpu.program_counter = (Word)(location - mem.memory);
+  cpu.program_counter = (Word)(location - mem.memory - 1);
 }
 
 void Emulator::JSR(int opcode)
 {
   Byte *location = handleAddressing(opcode);
-  mem.stackPushWord(cpu.S, cpu.program_counter); // push the return address (pc has already been incremented by addr func)
+  mem.stackPushWord(cpu.S, cpu.program_counter);         // push the return address (pc has already been incremented by addr func)
   cpu.program_counter = Word(location - mem.memory - 1); // -1 for off by one  i guess
 }
 
@@ -427,8 +436,8 @@ void Emulator::PHP(int opcode)
 void Emulator::PLP(int opcode)
 {
   cpu.P = mem.stackPullByte(cpu.S);
-  cpu.P &= ~MOS_6502::P_BREAK;  // Clear B (this is some internal detail i suppose)
-  cpu.P |= MOS_6502::P_UNUSED; // set the unused bit just in case 
+  cpu.P &= ~MOS_6502::P_BREAK; // Clear B (this is some internal detail i suppose)
+  cpu.P |= MOS_6502::P_UNUSED; // set the unused bit just in case
 }
 
 void Emulator::AND(int opcode)
@@ -520,7 +529,7 @@ void Emulator::initInstructionMap()
   instruction_map[0x19] = {"ORA", 0x19, 3, 4, AddressMode::ABSOLUTE_AND_Y, MAKE_BINDING(&Emulator::ORA)};
   instruction_map[0x01] = {"ORA", 0x01, 2, 6, AddressMode::INDEXED_INDIRECT, MAKE_BINDING(&Emulator::ORA)};
   instruction_map[0x11] = {"ORA", 0x11, 2, 5, AddressMode::INDIRECT_INDEXED, MAKE_BINDING(&Emulator::ORA)};
-    // STA - Store Accumulator
+  // STA - Store Accumulator
   instruction_map[0x85] = {"STA", 0x85, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::STA)};
   instruction_map[0x95] = {"STA", 0x95, 2, 4, AddressMode::ZERO_PAGE_AND_X, MAKE_BINDING(&Emulator::STA)};
   instruction_map[0x8D] = {"STA", 0x8D, 3, 4, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::STA)};
@@ -567,10 +576,11 @@ void Emulator::initInstructionMap()
   instruction_map[0x6E] = {"ROR", 0x6E, 3, 6, AddressMode::ABSOLUTE, MAKE_BINDING(&Emulator::ROR)};
   instruction_map[0x7E] = {"ROR", 0x7E, 3, 7, AddressMode::ABSOLUTE_AND_X, MAKE_BINDING(&Emulator::ROR)};
   instruction_map[0x18] = {"CLC", 0x18, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLC)};
-  instruction_map[0xD8] = {"CLD", 0xD8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLD)}; 
-  instruction_map[0x58] = {"CLI", 0x58, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLI)}; 
-  instruction_map[0xB8] = {"CLV", 0xB8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLV)};; 
-  instruction_map[0x38] = {"SEC", 0x38, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEC)}; 
+  instruction_map[0xD8] = {"CLD", 0xD8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLD)};
+  instruction_map[0x58] = {"CLI", 0x58, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLI)};
+  instruction_map[0xB8] = {"CLV", 0xB8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::CLV)};
+  ;
+  instruction_map[0x38] = {"SEC", 0x38, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEC)};
   instruction_map[0xF8] = {"SED", 0xF8, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SED)};
   instruction_map[0x29] = {"AND", 0x29, 2, 2, AddressMode::IMMEDIATE, MAKE_BINDING(&Emulator::AND)};
   instruction_map[0x25] = {"AND", 0x25, 2, 3, AddressMode::ZERO_PAGE, MAKE_BINDING(&Emulator::AND)};
@@ -622,14 +632,14 @@ void Emulator::initInstructionMap()
 
   // TSX / TXS
   instruction_map[0xBA] = {"TSX", 0xBA, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TSX)};
-  instruction_map[0x9A] = {"TXS", 0x9A, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TXS)};  
+  instruction_map[0x9A] = {"TXS", 0x9A, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::TXS)};
   instruction_map[0x48] = {"PHA", 0x48, 1, 3, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PHA)};
   instruction_map[0x08] = {"PHP", 0x08, 1, 3, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PHP)};
   instruction_map[0x68] = {"PLA", 0x68, 1, 4, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PLA)};
   instruction_map[0x28] = {"PLP", 0x28, 1, 4, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::PLP)};
   instruction_map[0x78] = {"SEI", 0x78, 1, 2, AddressMode::IMPLICIT, MAKE_BINDING(&Emulator::SEI)};
 
-    // Custom end-of-program instruction
+  // Custom end-of-program instruction
   instruction_map[0x02] = {"DONE", 0xFE, 1, 1, AddressMode::IMPLICIT, [](int) {}}; // nullptr for implementation as it's a custom termination
 }
 
@@ -676,16 +686,16 @@ void Emulator::RTI(int opcode)
   // this should be set to 1 all times
   cpu.P |= MOS_6502::P_UNUSED;
 
-  cpu.program_counter = mem.stackPullWord(cpu.S);
+  cpu.program_counter = mem.stackPullWord(cpu.S) - 1;
 }
 
 void Emulator::ADC(int opcode)
 {
-  Byte* addr = handleAddressing(opcode);
+  Byte *addr = handleAddressing(opcode);
   Word carry = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
   Word result = (Word)cpu.accumulator + *addr + carry;
   Byte result8 = result & 0xFF;
-  // what the cryptic bro :skull: 
+  // what the cryptic bro :skull:
   int is_overflow = (~(cpu.accumulator ^ *addr) & (cpu.accumulator ^ result)) & 0x80;
   cpu.accumulator = result8;
 
@@ -710,11 +720,9 @@ void Emulator::ADC(int opcode)
   handleArithmeticFlagChanges(result8);
 }
 
-
-
 void Emulator::SBC(int opcode)
 {
-  Byte* addr = handleAddressing(opcode);
+  Byte *addr = handleAddressing(opcode);
   Word carry = (cpu.P & MOS_6502::P_CARRY) ? 1 : 0;
   Word result = (Word)cpu.accumulator - *addr - (1 - carry);
   Byte result8 = result & 0xFF;
@@ -743,7 +751,6 @@ void Emulator::SBC(int opcode)
 
   handleArithmeticFlagChanges(result8);
 }
-
 
 void Emulator::ASL(int opcode)
 {
@@ -932,66 +939,66 @@ void Emulator::CPY(int opcode)
   }
 }
 
-void Emulator::branchIf(bool condition, Byte* to)
+void Emulator::branchIf(bool condition, Byte *to)
 {
-  if (condition) 
+  if (condition)
   {
     size_t location = to - mem.memory;
-    cpu.program_counter = (Word)location; 
+    cpu.program_counter = (Word)location;
   }
 }
 
 void Emulator::BCC(int opcode)
 {
-  Byte* offset = handleAddressing(opcode);
-  branchIf((cpu.P & MOS_6502::P_CARRY) == 0, offset); 
+  Byte *offset = handleAddressing(opcode);
+  branchIf((cpu.P & MOS_6502::P_CARRY) == 0, offset);
 }
 
-void Emulator::BCS(int opcode) 
+void Emulator::BCS(int opcode)
 {
-  Byte* offset = handleAddressing(opcode); 
+  Byte *offset = handleAddressing(opcode);
   branchIf(cpu.P & MOS_6502::P_CARRY, offset);
 }
 
-void Emulator::BEQ(int opcode) 
+void Emulator::BEQ(int opcode)
 {
-  Byte* offset = handleAddressing(opcode); 
+  Byte *offset = handleAddressing(opcode);
   branchIf(cpu.P & MOS_6502::P_ZERO, offset);
 }
 
 void Emulator::BMI(int opcode)
 {
-  Byte* offset = handleAddressing(opcode); 
+  Byte *offset = handleAddressing(opcode);
   branchIf(cpu.P & MOS_6502::P_NEGATIVE, offset);
 }
 
 void Emulator::BNE(int opcode)
 {
-  Byte* offset = handleAddressing(opcode); 
+  Byte *offset = handleAddressing(opcode);
   branchIf((cpu.P & MOS_6502::P_ZERO) == 0, offset);
 }
 
 void Emulator::BPL(int opcode)
 {
-  Byte* offset = handleAddressing(opcode); 
+  Byte *offset = handleAddressing(opcode);
   branchIf((cpu.P & MOS_6502::P_NEGATIVE) == 0, offset);
 }
 
 void Emulator::BVC(int opcode)
 {
-  Byte* offset = handleAddressing(opcode);
+  Byte *offset = handleAddressing(opcode);
   branchIf((cpu.P & MOS_6502::P_OVERFLOW) == 0, offset);
 }
 
 void Emulator::BVS(int opcode)
 {
-  Byte* offset = handleAddressing(opcode);
+  Byte *offset = handleAddressing(opcode);
   branchIf(cpu.P & MOS_6502::P_OVERFLOW, offset);
 }
 
 void Emulator::BIT(int opcode)
 {
-  Byte* addr = handleAddressing(opcode);
+  Byte *addr = handleAddressing(opcode);
   Byte value = *addr;
   Byte result = cpu.accumulator & value;
 
@@ -1025,4 +1032,3 @@ void Emulator::BIT(int opcode)
     cpu.P &= ~MOS_6502::P_OVERFLOW;
   }
 }
-
