@@ -7,8 +7,3 @@ RESET:  SEI
         LDA #$05
         ADC #$03
         BRK
-
-.segment "VECTORS"       ; Put vectors in the VECTORS segmen
-.org $FFFB
-        .word RESET              ; Reset vector at $FFFC
-        .word $0000              ; IRQ/BRK vector at $FFFE

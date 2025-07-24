@@ -6,15 +6,6 @@ int main(int argc, char* argv[])
 {
     Emulator emulator;
     Emulator::testing = false;
-
-    char reset_vector;
-    std::cout << "Use proper reset vector(Y/n) ";
-    std::cin >> reset_vector; 
-    if (reset_vector == 'n') 
-    {
-        emulator.reset_vector_mode = false;
-    } else ;
-    
     
     std::string inputFile;
     std::cout << "Enter binary file: "; 
