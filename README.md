@@ -2,6 +2,7 @@
 
 An educational C++ emulator for the classic [MOS Technology 6502](https://en.wikipedia.org/wiki/MOS_Technology_6502) 8-bit processor, built from the ground up to closely mirror real hardware behavior.
 
+[Demo here](https://www.youtube.com/watch?v=HIYumfzdDtw)
 ## Features
 
 * Full 6502 CPU functionality support (minus decimal mode)
